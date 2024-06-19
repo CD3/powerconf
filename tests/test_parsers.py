@@ -1,7 +1,7 @@
 import pyparsing
 import pytest
 
-from configurator import parsing
+from powerconfig import parsing
 
 
 def test_variable():
@@ -11,6 +11,8 @@ def test_variable():
     assert result["variable name"] == "xyz"
     result = parsing.variable.parse_string("$grid/x/min")
     assert result["variable name"] == "grid/x/min"
+    result = parsing.variable.parse_string("$x_q")
+    assert result["variable name"] == "x_q"
 
     with pytest.raises(pyparsing.exceptions.ParseException) as e:
         parsing.variable.parse_string("x$x")

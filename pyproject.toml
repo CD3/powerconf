@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "configurator"
+name = "powerconfig"
 version = "0.1.0"
 description = ""
 authors = ["CD Clark III <clifton.clark@gmail.com>"]

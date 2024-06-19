@@ -4,7 +4,7 @@ import pytest
 import yaml
 from fspathtree import fspathtree
 
-from configurator import expressions, render
+from powerconfig import expressions, render
 
 ureg = pint.UnitRegistry()
 Q_ = ureg.Quantity
@@ -95,7 +95,7 @@ def test_evaluate_expression():
     evaluator.add_global("math", math)
     config_renderer = render.ConfigRenderer(evaluator)
 
-    config = config_renderer.evaluate_all_expressions(config)
+    config = config_renderer._evaluate_all_expressions(config)
 
     assert config["/time/max"] == 3
     assert config["/prefix"] == "_3"
@@ -127,7 +127,7 @@ def test_construct_quantities():
     assert config["/N"] == 10
 
 
-def test_yaml_config_example():
+def test_yaml_config_example_1():
 
     config_text = """
 grid:
@@ -153,5 +153,25 @@ grid:
     config = config_renderer._expand_all_variables(config)
     assert config["grid/x/N"] == "$( (ctx['max'] - ctx['min']) / ctx['../res'] + 1 )"
 
-    config = config_renderer.evaluate_all_expressions(config)
+    config = config_renderer._evaluate_all_expressions(config)
     assert config["grid/x/N"] == 15001
+
+
+def test_yaml_config_example_2():
+    """Adding unit support legacy configs..."""
+
+    config_text = """
+x_q: 13 mm
+x: $($x_q.to("cm").magnitude)
+"""
+
+    config = fspathtree(yaml.safe_load(config_text))
+
+    evaluator = expressions.ExecExpressionEvaluator()
+    config_renderer = render.ConfigRenderer(evaluator)
+    config = config_renderer._construct_all_quantities(config)
+    config = config_renderer._expand_all_variables(config)
+    config = config_renderer._evaluate_all_expressions(config)
+
+    assert config["x_q"].magnitude == pytest.approx(13)
+    assert config["x"] == pytest.approx(1.3)

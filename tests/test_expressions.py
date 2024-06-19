@@ -3,7 +3,7 @@ import pyparsing
 import pytest
 from fspathtree import fspathtree
 
-from configurator import expressions
+from powerconfig import expressions
 
 ureg = pint.UnitRegistry()
 Q_ = ureg.Quantity

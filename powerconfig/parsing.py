@@ -1,6 +1,6 @@
 from pyparsing import *
 
-unbraced_variable = Combine(Literal("$") + Word(alphanums + "/")("variable name"))
+unbraced_variable = Combine(Literal("$") + Word(alphanums + "/_")("variable name"))
 braced_variable = Combine(
     Literal("$") + QuotedString(quote_char="{", end_quote_char="}")("variable name")
 )

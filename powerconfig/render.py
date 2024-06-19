@@ -20,7 +20,7 @@ class ConfigRenderer:
 
         return configs
 
-    def evaluate_all_expressions(self, config: fspathtree):
+    def _evaluate_all_expressions(self, config: fspathtree):
         paths = list(
             filter(
                 lambda p: self._contains_expression(config[p]),
