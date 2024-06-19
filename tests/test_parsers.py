@@ -6,11 +6,11 @@ from configurator import parsing
 
 def test_variable():
     result = parsing.variable.parse_string("$x")
-    assert result["var name"] == "x"
+    assert result["variable name"] == "x"
     result = parsing.variable.parse_string("$xyz")
-    assert result["var name"] == "xyz"
+    assert result["variable name"] == "xyz"
     result = parsing.variable.parse_string("$grid/x/min")
-    assert result["var name"] == "grid/x/min"
+    assert result["variable name"] == "grid/x/min"
 
     with pytest.raises(pyparsing.exceptions.ParseException) as e:
         parsing.variable.parse_string("x$x")
@@ -19,11 +19,11 @@ def test_variable():
         parsing.variable.parse_string("$ x")
 
     result = parsing.variable.parse_string("${x}")
-    assert result["var name"] == "x"
+    assert result["variable name"] == "x"
     result = parsing.variable.parse_string("${/grid/x/min}")
-    assert result["var name"] == "/grid/x/min"
+    assert result["variable name"] == "/grid/x/min"
     result = parsing.variable.parse_string("${/grid/x/min val}")
-    assert result["var name"] == "/grid/x/min val"
+    assert result["variable name"] == "/grid/x/min val"
 
     with pytest.raises(pyparsing.exceptions.ParseException) as e:
         parsing.variable.parse_string("$ {x}")

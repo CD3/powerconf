@@ -1,6 +1,7 @@
 import pint
 import pyparsing
 import pytest
+import yaml
 from fspathtree import fspathtree
 
 from configurator import expressions, render
@@ -94,7 +95,7 @@ def test_evaluate_expression():
     evaluator.add_global("math", math)
     config_renderer = render.ConfigRenderer(evaluator)
 
-    config = config_renderer.evaluate_expressions(config)
+    config = config_renderer.evaluate_all_expressions(config)
 
     assert config["/time/max"] == 3
     assert config["/prefix"] == "_3"
@@ -106,4 +107,51 @@ def test_evaluate_expression():
 
 def test_expand_variables():
     config_renderer = render.ConfigRenderer()
-    assert config_renderer._expand_variables("${x}") == "ctx['x']"
+    assert config_renderer._expand_variables("${x}", "ctx['{name}']") == "ctx['x']"
+    assert (
+        config_renderer._expand_variables("${x} + $y", "ctx['{name}']")
+        == "ctx['x'] + ctx['y']"
+    )
+
+
+def test_construct_quantities():
+    config = fspathtree(
+        {"time": {"max": "2 s"}, "laser": {"power": "1 W/cm^2"}, "tag": "CW", "N": 10}
+    )
+    config_renderer = render.ConfigRenderer()
+    config = config_renderer._construct_all_quantities(config)
+
+    assert config["/time/max"].magnitude == pytest.approx(2)
+    assert config["/laser/power"].to("mW/cm^2").magnitude == pytest.approx(1000)
+    assert config["/tag"] == "CW"
+    assert config["/N"] == 10
+
+
+def test_yaml_config_example():
+
+    config_text = """
+grid:
+    res: 1 um
+    x:
+      min: 0 cm
+      max: 1.5 cm
+      N: $( ($max - $min) / ${../res} + 1 )
+    y:
+      min: 0 cm
+      max: 0.5 cm
+      N: $( ($max - $min) / ${../res} + 1 )
+"""
+
+    config = fspathtree(yaml.safe_load(config_text))
+
+    evaluator = expressions.ExecExpressionEvaluator()
+    config_renderer = render.ConfigRenderer(evaluator)
+
+    config = config_renderer._construct_all_quantities(config)
+    assert config["grid/x/max"].magnitude == pytest.approx(1.5)
+
+    config = config_renderer._expand_all_variables(config)
+    assert config["grid/x/N"] == "$( (ctx['max'] - ctx['min']) / ctx['../res'] + 1 )"
+
+    config = config_renderer.evaluate_all_expressions(config)
+    assert config["grid/x/N"] == 15001

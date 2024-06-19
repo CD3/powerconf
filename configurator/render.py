@@ -2,6 +2,7 @@ import copy
 import itertools
 from typing import Any, Dict, List
 
+import pint
 from fspathtree import fspathtree
 
 from . import parsing
@@ -10,6 +11,8 @@ from . import parsing
 class ConfigRenderer:
     def __init__(self, expression_evaluator=None):
         self.expression_evaluator = expression_evaluator
+        self.ureg = pint.UnitRegistry()
+        self.Quantity = self.ureg.Quantity
 
     def expand_batch_nodes(self, config: fspathtree):
         """Expand @batch nodes in a configuration tree into multiple configuration trees."""
@@ -17,7 +20,7 @@ class ConfigRenderer:
 
         return configs
 
-    def evaluate_expressions(self, config: fspathtree):
+    def evaluate_all_expressions(self, config: fspathtree):
         paths = list(
             filter(
                 lambda p: self._contains_expression(config[p]),
@@ -53,12 +56,24 @@ class ConfigRenderer:
 
         return config
 
-    def evaluate_expressions_repeatedly(self):
+    def evaluate_all_expressions_repeatedly(self):
         pass
 
-    def _expand_variables(self, text: Any):
+    def _construct_all_quantities(self, config: fspathtree):
+        """Replace strings in the tree representing quantities with pint.Quantity objects."""
+        for path in config.get_all_leaf_node_paths():
+            if type(config[path]) == str:
+                try:
+                    q = self.Quantity(config[path])
+                    config[path] = q
+                except:
+                    pass
+
+        return config
+
+    def _expand_variables(self, text: Any, template: str = "ctx['{name}']"):
         """
-        Expand variable shell-style variables into python variables
+        Expand shell-style variables into python variables
 
         ${x} -> c['x']
         ${/grid/x} -> c['/grid/x']
@@ -68,9 +83,21 @@ class ConfigRenderer:
         for tokens, start, end in parsing.variable.scan_string(text):
             new_text += text[i:start]
             i = end
-            new_text += "ctx['" + tokens["variable name"] + "']"
+            new_text += template.format(name=tokens["variable name"])
         new_text += text[i:]
         return new_text
+
+    def _expand_all_variables(
+        self, config: fspathtree, template: str = "ctx['{name}']"
+    ):
+        """
+        Expand all shell-style variables into python variables in the entire tree.
+        """
+        for path in config.get_all_leaf_node_paths():
+            if type(config[path]) == str:
+                config[path] = self._expand_variables(config[path])
+
+        return config
 
     def _contains_expression(self, text: Any):
         if type(text) is not str:
