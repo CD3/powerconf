@@ -18,9 +18,27 @@ class ConfigRenderer:
         self.ureg = pint.UnitRegistry()
         self.Quantity = self.ureg.Quantity
 
+    def expand_and_render(self,config):
+        """Expand batch configurations and render each instance."""
+        configs = self.expand_batch_nodes(config)
+        for i in range(len(configs)):
+            configs[i] = self.render(configs[i])
+
+        return configs
+
     def expand_batch_nodes(self, config: fspathtree):
         """Expand @batch nodes in a configuration tree into multiple configuration trees."""
         configs = []
+
+        batch_leaves = self._get_batch_leaves(config)
+
+        for vals in itertools.product(
+            *[config[leaf + "/@batch"] for leaf in batch_leaves.keys()]
+        ):
+            instance = copy.deepcopy(config)
+            for i, leaf in enumerate(batch_leaves.keys()):
+                instance[leaf] = vals[i]
+            configs.append(instance)
 
         return configs
 
@@ -225,17 +243,3 @@ class ConfigRenderer:
                 )
         return batch_leaves
 
-    def _expand_batch_nodes(self, config: fspathtree):
-        configs = []
-
-        batch_leaves = self._get_batch_leaves(config)
-
-        for vals in itertools.product(
-            *[config[leaf + "/@batch"] for leaf in batch_leaves.keys()]
-        ):
-            instance = copy.deepcopy(config)
-            for i, leaf in enumerate(batch_leaves.keys()):
-                instance[leaf] = vals[i]
-            configs.append(instance)
-
-        return configs

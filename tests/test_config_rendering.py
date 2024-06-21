@@ -19,7 +19,7 @@ def test_batch_expansion_single_node():
     assert "/time/max" in tmp
     assert tmp["/time/max"] == 3
 
-    configs = config_renderer._expand_batch_nodes(config)
+    configs = config_renderer.expand_batch_nodes(config)
     assert len(configs) == 3
     assert configs[0]["/time/max"] == 1
     assert configs[1]["/time/max"] == 2
@@ -42,7 +42,7 @@ def test_batch_expansion_two_nodes():
     assert tmp["/time/max"] == 3
     assert tmp["/grid/x/max"] == 2
 
-    configs = config_renderer._expand_batch_nodes(config)
+    configs = config_renderer.expand_batch_nodes(config)
     assert len(configs) == 6
     assert configs[0]["/time/max"] == 1
     assert configs[1]["/time/max"] == 1
@@ -255,3 +255,25 @@ g : $($f)
     config = config_renderer.render(config)
 
     assert config["/g"] == "here"
+
+def test_batch_expansion_and_rendering():
+    config_text = """
+a : 
+    '@batch':
+        - 1
+        - 2
+        - 3
+b : $($a)
+c : $($b)
+d : $($c)
+e : $($d)
+f : $($e)
+g : $($f)
+"""
+
+    config = fspathtree(yaml.safe_load(config_text))
+    config_renderer = rendering.ConfigRenderer()
+    configs = config_renderer.expand_and_render(config)
+
+    assert len(configs) == 3
+    assert configs[0]['/g'] == 1
