@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "powerconfig"
+name = "powerconf"
 version = "0.1.0"
 description = ""
 authors = ["CD Clark III <clifton.clark@gmail.com>"]
@@ -11,11 +11,13 @@ pint = "^0.24"
 fspathtree = "^0.9"
 pyparsing = "^3.1.2"
 numpy = "^2.0.0"
+networkx = "^3.3"
 
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.2.2"
 pyyaml = "^6.0.1"
+matplotlib = "^3.9.0"
 
 [build-system]
 requires = ["poetry-core"]

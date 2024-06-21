@@ -4,7 +4,7 @@ import pytest
 import yaml
 from fspathtree import fspathtree
 
-from powerconfig import expressions, render
+from powerconf import expressions, parsing, rendering
 
 ureg = pint.UnitRegistry()
 Q_ = ureg.Quantity
@@ -12,7 +12,7 @@ Q_ = ureg.Quantity
 
 def test_batch_expansion_single_node():
     config = fspathtree({"time": {"max": {"@batch": [1, 2, 3]}}})
-    config_renderer = render.ConfigRenderer(expressions.ExecExpressionEvaluator())
+    config_renderer = rendering.ConfigRenderer(expressions.ExecExpressionEvaluator())
 
     tmp = config_renderer._get_batch_leaves(config)
     assert len(tmp) == 1
@@ -33,7 +33,7 @@ def test_batch_expansion_two_nodes():
             "grid": {"x": {"max": {"@batch": [4, 5]}}},
         }
     )
-    config_renderer = render.ConfigRenderer(expressions.ExecExpressionEvaluator())
+    config_renderer = rendering.ConfigRenderer(expressions.ExecExpressionEvaluator())
 
     tmp = config_renderer._get_batch_leaves(config)
     assert len(tmp) == 2
@@ -60,7 +60,7 @@ def test_batch_expansion_two_nodes():
 
 def test_expression_detector():
 
-    config_renderer = render.ConfigRenderer(expressions.ExecExpressionEvaluator())
+    config_renderer = rendering.ConfigRenderer(expressions.ExecExpressionEvaluator())
 
     assert config_renderer._contains_expression(1) == False
     assert config_renderer._contains_expression("x") == False
@@ -93,9 +93,9 @@ def test_evaluate_expression():
     import math
 
     evaluator.add_global("math", math)
-    config_renderer = render.ConfigRenderer(evaluator)
+    config_renderer = rendering.ConfigRenderer(evaluator)
 
-    config = config_renderer._evaluate_all_expressions(config)
+    config = config_renderer.render(config)
 
     assert config["/time/max"] == 3
     assert config["/prefix"] == "_3"
@@ -106,7 +106,7 @@ def test_evaluate_expression():
 
 
 def test_expand_variables():
-    config_renderer = render.ConfigRenderer()
+    config_renderer = rendering.ConfigRenderer()
     assert config_renderer._expand_variables("${x}", "ctx['{name}']") == "ctx['x']"
     assert (
         config_renderer._expand_variables("${x} + $y", "ctx['{name}']")
@@ -118,7 +118,7 @@ def test_construct_quantities():
     config = fspathtree(
         {"time": {"max": "2 s"}, "laser": {"power": "1 W/cm^2"}, "tag": "CW", "N": 10}
     )
-    config_renderer = render.ConfigRenderer()
+    config_renderer = rendering.ConfigRenderer()
     config = config_renderer._construct_all_quantities(config)
 
     assert config["/time/max"].magnitude == pytest.approx(2)
@@ -144,21 +144,15 @@ grid:
 
     config = fspathtree(yaml.safe_load(config_text))
 
-    evaluator = expressions.ExecExpressionEvaluator()
-    config_renderer = render.ConfigRenderer(evaluator)
+    config_renderer = rendering.ConfigRenderer()
 
-    config = config_renderer._construct_all_quantities(config)
+    config = config_renderer.render(config)
     assert config["grid/x/max"].magnitude == pytest.approx(1.5)
-
-    config = config_renderer._expand_all_variables(config)
-    assert config["grid/x/N"] == "$( (ctx['max'] - ctx['min']) / ctx['../res'] + 1 )"
-
-    config = config_renderer._evaluate_all_expressions(config)
     assert config["grid/x/N"] == 15001
 
 
 def test_yaml_config_example_2():
-    """Adding unit support legacy configs..."""
+    """Adding unit support to legacy configs..."""
 
     config_text = """
 x_q: 13 mm
@@ -168,10 +162,96 @@ x: $($x_q.to("cm").magnitude)
     config = fspathtree(yaml.safe_load(config_text))
 
     evaluator = expressions.ExecExpressionEvaluator()
-    config_renderer = render.ConfigRenderer(evaluator)
-    config = config_renderer._construct_all_quantities(config)
-    config = config_renderer._expand_all_variables(config)
-    config = config_renderer._evaluate_all_expressions(config)
+    config_renderer = rendering.ConfigRenderer(evaluator)
+    config = config_renderer.render(config)
 
     assert config["x_q"].magnitude == pytest.approx(13)
     assert config["x"] == pytest.approx(1.3)
+
+
+def test_yaml_config_example_3():
+    """Adding unit support to legacy configs..."""
+
+    config_text = """
+x_q: 13 mm
+x: $($x_q.to("cm").magnitude)
+"""
+
+    config = fspathtree(yaml.safe_load(config_text))
+
+    evaluator = expressions.ExecExpressionEvaluator()
+    config_renderer = rendering.ConfigRenderer(evaluator)
+
+    config = config_renderer.render(config)
+
+    assert config["x_q"].magnitude == pytest.approx(13)
+    assert config["x"] == pytest.approx(1.3)
+
+
+def test_inplace_vs_copy_render():
+    config_text = """
+x_q: 13 mm
+x: $($x_q.to("cm").magnitude)
+"""
+
+    config = fspathtree(yaml.safe_load(config_text))
+
+    config_renderer = rendering.ConfigRenderer()
+
+    rconfig = config_renderer.render(config)
+
+    assert rconfig["x_q"].magnitude == pytest.approx(13)
+    assert rconfig["x"] == pytest.approx(1.3)
+    assert config["x_q"] == "13 mm"
+    assert config["x"] == '$($x_q.to("cm").magnitude)'
+
+    rconfig = config_renderer.render(config, make_copy=False)
+
+    assert rconfig["x_q"].magnitude == pytest.approx(13)
+    assert rconfig["x"] == pytest.approx(1.3)
+    assert config["x_q"].magnitude == pytest.approx(13)
+    assert config["x"] == pytest.approx(1.3)
+
+
+def test_circular_dependency_detection():
+    """Adding unit support to legacy configs..."""
+
+    config_text = """
+a : $($g)
+b : $($a)
+c : $($b)
+d : $($c)
+e : $($d)
+f : $($e)
+g : $($f)
+"""
+
+    config = fspathtree(yaml.safe_load(config_text))
+    evaluator = expressions.ExecExpressionEvaluator()
+    config_renderer = rendering.ConfigRenderer(evaluator)
+
+    with pytest.raises(RuntimeError) as e:
+        config = config_renderer.render(config)
+    assert "Circular dependencies detected" in str(e)
+
+
+def test_long_dependency_chaings():
+    """Adding unit support to legacy configs..."""
+
+    config_text = """
+a : 'here'
+b : $($a)
+c : $($b)
+d : $($c)
+e : $($d)
+f : $($e)
+g : $($f)
+"""
+
+    config = fspathtree(yaml.safe_load(config_text))
+    evaluator = expressions.ExecExpressionEvaluator()
+    config_renderer = rendering.ConfigRenderer(evaluator)
+
+    config = config_renderer.render(config)
+
+    assert config["/g"] == "here"

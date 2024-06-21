@@ -1,7 +1,7 @@
 import pyparsing
 import pytest
 
-from powerconfig import parsing
+from powerconf import parsing
 
 
 def test_variable():
