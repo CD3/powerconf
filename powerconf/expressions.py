@@ -31,10 +31,14 @@ class ExecExpressionEvaluator(ExpressionEvaluator):
 
         import math
 
-        import numpy
-
-        self.add_global("numpy", numpy)
         self.add_global("math", math)
+
+        try:
+            import numpy
+
+            self.add_global("numpy", numpy)
+        except:
+            pass
 
     def add_global(self, name, obj):
         self.globals[name] = obj
