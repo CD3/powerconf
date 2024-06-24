@@ -36,5 +36,15 @@ grid:
         N: $( (${max} - ${min})/${../resolution} + 1)
 ```
 In this example, we give a resolution to use for both x and y directions and then calculate the number
-of points to use with an expression.
+of points to use with an expression. Note the relative paths to configuration parameters used in the
+expressions. `powerconf` uses the [`fspathtree`](https://github.com/CD3/fspathtree) module to provide
+filesystem-like access to elements in a nested dict.
 
+
+## Install
+
+Install with pip
+
+```bash
+$ pip install powerconf
+```
