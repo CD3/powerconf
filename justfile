@@ -3,5 +3,5 @@ test *args:
         poetry run pytest -s "$@"
 
 pub:
-  rm dist -r
+  rm dist -rf
   poetry publish --build
