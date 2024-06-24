@@ -4,7 +4,7 @@ import pytest
 import yaml
 from fspathtree import fspathtree
 
-from powerconf import expressions, parsing, rendering
+from powerconf import expressions, parsing, readers, rendering
 
 ureg = pint.UnitRegistry()
 Q_ = ureg.Quantity
@@ -59,7 +59,6 @@ def test_batch_expansion_two_nodes():
 
 
 def test_expression_detector():
-
     config_renderer = rendering.ConfigRenderer(expressions.ExecExpressionEvaluator())
 
     assert config_renderer._contains_expression(1) == False
@@ -71,7 +70,6 @@ def test_expression_detector():
 
 
 def test_evaluate_expression():
-
     config = fspathtree(
         {
             "time": {"max": "$(1 + 2)"},
@@ -128,7 +126,6 @@ def test_construct_quantities():
 
 
 def test_yaml_config_example_1():
-
     config_text = """
 grid:
     res: 1 um
@@ -256,6 +253,7 @@ g : $($f)
 
     assert config["/g"] == "here"
 
+
 def test_batch_expansion_and_rendering():
     config_text = """
 a : 
@@ -276,4 +274,86 @@ g : $($f)
     configs = config_renderer.expand_and_render(config)
 
     assert len(configs) == 3
-    assert configs[0]['/g'] == 1
+    assert configs[0]["/g"] == 1
+
+
+def test_rendering_partial_configs():
+    text = """
+one: 1
+two: 2
+---
+three : 3
+    """
+
+    configs = readers.load_yaml_docs(text)
+    configs = rendering.expand_partial_configs(configs)
+
+    assert len(configs) == 1
+
+    assert "one" in configs[0]
+    assert "two" in configs[0]
+    assert "three" in configs[0]
+
+    configs = readers.load_yaml_docs(text)
+    configs = rendering.expand_partial_configs(configs, include_base=True)
+
+    assert len(configs) == 2
+
+    assert "one" in configs[0]
+    assert "two" in configs[0]
+    assert "three" not in configs[0]
+    assert "one" in configs[1]
+    assert "two" in configs[1]
+    assert "three" in configs[1]
+
+
+def test_rendering_partial_configs_with_nested_trees():
+    text = """
+sim:
+    grid:
+        res : 1 um
+        x:
+            min: 0 cm
+            max: 1 cm
+        y:
+            min: 0 cm
+            max: 1 cm
+---
+sim:
+    grid:
+        x:
+            N: $( ($max-$min)/($/sim/grid/res) + 1)
+        y:
+            N: $( ($max-$min)/($/sim/grid/res) + 1)
+    """
+
+    configs = readers.load_yaml_docs(text)
+    configs = rendering.expand_partial_configs(configs)
+
+    assert len(configs) == 1
+
+    assert "/sim/grid/x/N" in configs[0]
+    assert "/sim/grid/x/min" in configs[0]
+    assert "/sim/grid/x/max" in configs[0]
+    assert "/sim/grid/y/N" in configs[0]
+    assert "/sim/grid/y/min" in configs[0]
+    assert "/sim/grid/y/max" in configs[0]
+
+
+def test_rendering_complex_dependencies():
+    config = fspathtree(
+        {
+            "laser": {
+                "irradiance": "1 W/cm^2",
+                "one_over_e2_diameter": "1 cm",
+                "one_over_e_diameter": "$(${one_over_e2_diameter}/math.sqrt(2))",
+                "one_over_e_area": "$(math.pi*${one_over_e_diameter}**2/4)",
+                "power": "$(${irradiance} * ${one_over_e_area})",
+            }
+        }
+    )
+    config_renderer = rendering.ConfigRenderer()
+    config = config_renderer.render(config)
+
+    assert config["/laser/one_over_e_diameter"].magnitude == pytest.approx(1 / 2**0.5)
+    assert config["/laser/power"].magnitude == pytest.approx(1 * 3.14159 / 8)

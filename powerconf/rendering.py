@@ -9,6 +9,29 @@ from fspathtree import fspathtree
 from . import expressions, graphs, parsing
 
 
+def expand_partial_configs(configs: List[fspathtree], include_base=False):
+    """
+    Give a list of configuration trees, treat the frist tree
+    as a "base" configuration and all other trees as partial configurations
+    that should be merged with the base config to create instances.
+
+    @param include_base : if true, the base config will be included in the returned set.
+    """
+    assert len(configs) > 0
+
+    if len(configs) == 1:
+        return configs
+
+    full_configs = []
+    if include_base:
+        full_configs.append(copy.deepcopy(configs[0]))
+    for c in configs[1:]:
+        full_configs.append(copy.deepcopy(configs[0]))
+        full_configs[-1].update(c)
+
+    return full_configs
+
+
 class ConfigRenderer:
     def __init__(self, expression_evaluator=None):
         if expression_evaluator is None:
@@ -18,7 +41,7 @@ class ConfigRenderer:
         self.ureg = pint.UnitRegistry()
         self.Quantity = self.ureg.Quantity
 
-    def expand_and_render(self,config):
+    def expand_and_render(self, config):
         """Expand batch configurations and render each instance."""
         configs = self.expand_batch_nodes(config)
         for i in range(len(configs)):
@@ -87,11 +110,26 @@ class ConfigRenderer:
         self, config: fspathtree, graph: graphs.DependencyGraph
     ):
         """Evaluate the expressions in a configuration tree, using a graph of the tree dependencies to determine the render order."""
-
+        # We need to determine which the order to evaluate evaluate the nodes of the config gree.
+        # We have a graph that describes the dependencies. each node is the graph is a leaf node
+        # in the tree, and the edges represent dependencies between nodes.
+        # Consider an example,
+        #
+        #          A        X
+        #        /   \    /   \
+        #       B    C   Y     Z
+        #           / \ /
+        #          D   E
+        #
+        # Assume all edgest are directed DOWN.
+        # B, D, E and Z then have no dependencies. All of their edges are "in" edges,
+        # they have no "out" edges.
+        #
+        # With networkx we can easily get a list of all nodes with no dependencies, first
+        # get the number of in and out edges for each node.
         out_degrees = dict(graph.out_degree)
         in_degrees = dict(graph.in_degree)
-        # render all nodes that don't have any dependencies first
-        # these are the nodes with out_degree == 0
+        # any nodes that have zero out edges (out_degrees = 0) have no dependencies, and we can go ahead and render these.
         config = self._evaluate_expressions(
             config,
             paths=map(
@@ -99,10 +137,14 @@ class ConfigRenderer:
                 filter(lambda item: item[1] == 0, out_degrees.items()),
             ),
         )
-
-        # get all nodes with dependencies
-        # these are all nodes with out_degree > 0
-        # nodes_with_dependencies = root_dependencies = list(filter( lambda k: out_degrees[k] > 0, out_degrees.keys() ))
+        # Now we need to render nodes that have dependencies, but we need to determine the order that this can be
+        # done first. In the above example, we can evaluate A unit B and C are evaluated. We can evaluate C unilt D and E
+        # are evaluated.
+        #
+        # With networkx, we can easily get a list of all ancestors of a node. For node E, this would be [C,Y,A,X]
+        # Note: with the direction of our edges, an ancestor _depends_ on the node. So C is an ancestor of E, even
+        # though it seems more natural to consider E the ancestor of C. If we wanted E to be the ancestor of C,
+        # we would need to direct our edgest to point from dependencies to dependences.
 
         # find all root dependencies. those nodes that don't depend on any others, but are depended on by others
         # thse are all nodes with out_degrees == 0 and in_degrees > 0
@@ -112,6 +154,45 @@ class ConfigRenderer:
                 filter(lambda k: out_degrees[k] == 0, out_degrees.keys()),
             )
         )
+
+        # For each root node, get a list of all ancestors, and then find every path that connects the ancestor to the root.
+        # in this example above, node E would have 4 ancestors, [C,Y,A,X]. And the list of paths connecting E to its ancestors
+        # would be E -> C, E -> Y, E -> C -> A, and E -> Y -> X.
+        # However, we can't simply take one of these paths and start evaluating nodes. If we tried to evaluate E -> C -> A for example,
+        # we would get an error if B had not already been determined.
+        #
+        # What we really need to be able to do is find A and X, then work backward from there...
+        #
+        # Find all leaf node dependencies. These are nodes that only have dependencies, no dependents (out_degree > 0, in_nodes = 0)
+        leaf_dependencies = list(
+            filter(
+                lambda k: in_degrees[k] == 0,
+                filter(lambda k: out_degrees[k] > 0, out_degrees.keys()),
+            )
+        )
+        # now get a set of paths that connect each leaf node to its children
+        for leaf in leaf_dependencies:
+            all_paths = []
+            for d in graphs.nx.descendants(graph, leaf):
+                all_paths += graphs.nx.all_simple_paths(graph, leaf, d)
+
+            # node batches are sets of nodes that can all be rendered
+            # at the same time.
+            node_batches = [
+                set(filter(lambda n: n is not None, nodes))
+                for nodes in itertools.zip_longest(*all_paths)
+            ]
+            node_batches.reverse()
+            for batch in node_batches[1:]:
+                config = self._evaluate_expressions(config, paths=batch)
+
+        return config
+
+        for root in root_dependencies:
+            all_chains = []
+            for a in graphs.nx.ancestors(graph, root):
+                all_chains += graphs.nx.all_simple_paths(graph, a, root)
+            nodes_to_evaluate = []
 
         # get all paths in the graph that end on roots
         all_chains = []
@@ -132,6 +213,8 @@ class ConfigRenderer:
                     break
             if save:
                 longest_chains.append(p1)
+
+        # determine the order to evaluate dependencies.
 
         for chain in longest_chains:
             chain.reverse()  # paths start with oldest ancestor and end with root node.
@@ -242,4 +325,3 @@ class ConfigRenderer:
                     batch_leaves.get(str(leaf.parent.parent), 0) + 1
                 )
         return batch_leaves
-
