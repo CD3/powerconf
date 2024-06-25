@@ -11,6 +11,7 @@ pint = "^0.24"
 fspathtree = "^0.9"
 pyparsing = "^3.1.2"
 networkx = "^3.3"
+pystache = "^0.6.5"
 
 
 [tool.poetry.group.dev.dependencies]

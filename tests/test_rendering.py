@@ -35,3 +35,18 @@ def test_quantity_construction():
     assert type(x) != Q_
     x = rendering.try_construct_quantity(" 4.5 cm", quantity_class=Q_)
     assert type(x) == Q_
+
+
+def test_mustache_template_rendering():
+    ctx = fspathtree({'grid':{'x':{'max':'1 cm'}}})
+
+    template_text = 'grid.x.max = {{grid/x/max}}'
+    rendered_text = rendering.render_mustache_template(template_text,ctx)
+    assert rendered_text == "grid.x.max = 1 cm"
+
+
+    template_text = 'grid.x.max = {{grid/y/max}}'
+    with pytest.raises(RuntimeError) as e:
+        rendered_text = rendering.render_mustache_template(template_text,ctx)
+    assert "Required configuration" in str(e)
+    assert "grid/y/max" in str(e)

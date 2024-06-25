@@ -1,9 +1,11 @@
 import copy
 import itertools
 from os.path import normpath
+from pathlib import Path
 from typing import Any, Callable, Dict, List
 
 import pint
+import pystache
 from fspathtree import fspathtree
 
 from . import expressions, graphs, parsing
@@ -387,3 +389,48 @@ class ConfigRenderer:
                     batch_leaves.get(str(leaf.parent.parent), 0) + 1
                 )
         return batch_leaves
+
+
+def render_mustache_template(template_text: str, ctx: fspathtree):
+    """
+    Render a Mustache template text string using the values in a context. The context can
+    be a configuration tree that has been previously loaded and rendered with powerconf.
+    """
+    # check for keys in the template that are not in the config dict
+    # and throw an exception if any are missing
+    parse_tree = pystache.parse(template_text)
+    missing_keys = list(
+        filter(
+            lambda item: item not in ctx,
+            set(
+                map(
+                    lambda item: item.key,
+                    filter(lambda item: type(item) != str, parse_tree._parse_tree),
+                )
+            ),
+        )
+    )
+    if len(missing_keys) > 0:
+        msg = (
+            "Required configuration parameters were missing. These parameters are present in the template, but were not given in the context: "
+            + ", ".join(missing_keys)
+        )
+        raise RuntimeError(msg)
+
+    # we have to pass a flat dict to pystache, so we generate
+    # it inline here. also, Mustache uses a leading slash on a key to
+    # identify the end of a section, so we can use absolute path, just
+    # relative paths with respect to the root.
+    rendered_text = pystache.render(
+        template_text, {str(p)[1:]: ctx[p] for p in ctx.get_all_leaf_node_paths()}
+    )
+
+    return rendered_text
+
+
+def render_mustache_template_file(
+    template_file: Path, ctx: fspathtree, output_file: Path
+):
+    template_text = template_file.read_text()
+    rendered_text = render_mustache_template(template_text, ctx)
+    output_file.write_text(rendered_text)
