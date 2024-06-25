@@ -1,12 +1,16 @@
 import copy
 import itertools
 from os.path import normpath
-from typing import Any, Dict, List
+from typing import Any, Callable, Dict, List
 
 import pint
 from fspathtree import fspathtree
 
 from . import expressions, graphs, parsing
+
+__local_Quantity = (
+    pint.UnitRegistry().Quantity
+)  # a local instance for testing if strings are quantities.
 
 
 def expand_partial_configs(configs: List[fspathtree], include_base=False):
@@ -30,6 +34,102 @@ def expand_partial_configs(configs: List[fspathtree], include_base=False):
         full_configs[-1].update(c)
 
     return full_configs
+
+
+def try_construct_quantity(
+    obj: Any,
+    is_quantity: Callable[[Any], bool] = None,
+    quantity_class: Any = __local_Quantity,
+):
+    """
+    Try to construct a pint.UnitRegistry().Quantity
+    object from a given object, if the given looks like it would be
+    a quantity.
+
+    By default, an object is considered a quantity if it:
+        - is a string,
+        - begins with a numerical value,
+        - does not throw an exception when passed to pint.UnitRegistry().Quantity(...) constructor
+
+    @param is_quantity: a function returning true if the object should be considered a quantity. This allows the caller to provide
+                        their logic to identify quantities.
+    @param quantity_class : the class that should be used to construct quantities. pint cannot handle quantities from different
+                            registries, so this allows the caller to provide the class they are uing.
+    """
+
+    if is_quantity is None:
+
+        def f(obj: Any) -> bool:
+            if type(obj) is not str:
+                return False
+            try:
+                float(obj.strip().split(" ")[0])
+            except:
+                return False
+            try:
+                quantity_class(obj.strip())
+            except:
+                return False
+
+            return True
+
+        is_quantity = f
+
+    if is_quantity(obj):
+        return quantity_class(obj)
+    else:
+        return obj
+
+
+def expand_variables(text: Any, template: str = "ctx['{name}']"):
+    """
+    Expand shell-style variables into python variables
+
+    @param template: optional template string used for variable expantion. The variables
+                     name will be inserted into the template using {VARNAME}. Default value
+                     is "ctx['{name}']", which means we will have:
+
+                    $x -> c['x']
+                    ${x} -> c['x']
+                    $/grid/x -> c['/grid/x']
+                    ${/grid/x} -> c['/grid/x']
+
+    """
+    i = 0
+    new_text = ""
+    for tokens, start, end in parsing.variable.scan_string(text):
+        new_text += text[i:start]
+        i = end
+        new_text += template.format(name=tokens["variable name"])
+    new_text += text[i:]
+    return new_text
+
+
+def contains_expression(text: Any):
+    """
+    Returns true if a string contains expression.
+    Supports passing not strings as arguments, in which
+    case False is returned.
+    """
+
+    if type(text) is not str:
+        return False
+
+    results = parsing.expression.search_string(text)
+    return len(results) > 0
+
+
+def contains_variable(text: Any):
+    """
+    Returns true if a string contains a variable refernce.
+    Supports passing not strings as arguments, in which
+    case False is returned.
+    """
+    if type(text) is not str:
+        return False
+
+    results = parsing.variable.search_string(text)
+    return len(results) > 0
 
 
 class ConfigRenderer:
@@ -225,7 +325,7 @@ class ConfigRenderer:
     def _evaluate_expressions(self, config: fspathtree, paths: List[Any]):
         """Evaluate expression in the config at the paths listed. Uses as a utility function on _evaluate_all_expressions(...)"""
         for path in paths:
-            if not self._contains_expression(config[path]):
+            if not contains_expression(config[path]):
                 continue
 
             self.expression_evaluator.globals["ctx"] = config[path.parent]
@@ -258,17 +358,9 @@ class ConfigRenderer:
     def _construct_all_quantities(self, config: fspathtree):
         """Replace strings in the tree representing quantities with pint.Quantity objects."""
         for path in config.get_all_leaf_node_paths():
-            if type(config[path]) == str:
-                if self._contains_expression(config[path]) or self._contains_variable(
-                    config[path]
-                ):
-                    continue
-                try:
-                    q = self.Quantity(config[path])
-                    config[path] = q
-                except:
-                    pass
-
+            config[path] = try_construct_quantity(
+                config[path], quantity_class=self.Quantity
+            )
         return config
 
     def _expand_all_variables(
@@ -279,39 +371,9 @@ class ConfigRenderer:
         """
         for path in config.get_all_leaf_node_paths():
             if type(config[path]) == str:
-                config[path] = self._expand_variables(config[path])
+                config[path] = expand_variables(config[path])
 
         return config
-
-    def _expand_variables(self, text: Any, template: str = "ctx['{name}']"):
-        """
-        Expand shell-style variables into python variables
-
-        ${x} -> c['x']
-        ${/grid/x} -> c['/grid/x']
-        """
-        i = 0
-        new_text = ""
-        for tokens, start, end in parsing.variable.scan_string(text):
-            new_text += text[i:start]
-            i = end
-            new_text += template.format(name=tokens["variable name"])
-        new_text += text[i:]
-        return new_text
-
-    def _contains_expression(self, text: Any):
-        if type(text) is not str:
-            return False
-
-        results = parsing.expression.search_string(text)
-        return len(results) > 0
-
-    def _contains_variable(self, text: Any):
-        if type(text) is not str:
-            return False
-
-        results = parsing.variable.search_string(text)
-        return len(results) > 0
 
     def _get_batch_leaves(self, config: fspathtree):
         """
