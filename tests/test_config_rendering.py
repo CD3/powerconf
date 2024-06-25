@@ -59,14 +59,12 @@ def test_batch_expansion_two_nodes():
 
 
 def test_expression_detector():
-    config_renderer = rendering.ConfigRenderer(expressions.ExecExpressionEvaluator())
-
-    assert config_renderer._contains_expression(1) == False
-    assert config_renderer._contains_expression("x") == False
-    assert config_renderer._contains_expression("${x}") == False
-    assert config_renderer._contains_expression("$(1 + 1)") == True
-    assert config_renderer._contains_expression("_$(1 + 1)-var") == True
-    assert config_renderer._contains_expression("_$(1 + 1)-to-$(2+2)") == True
+    assert rendering.contains_expression(1) == False
+    assert rendering.contains_expression("x") == False
+    assert rendering.contains_expression("${x}") == False
+    assert rendering.contains_expression("$(1 + 1)") == True
+    assert rendering.contains_expression("_$(1 + 1)-var") == True
+    assert rendering.contains_expression("_$(1 + 1)-to-$(2+2)") == True
 
 
 def test_evaluate_expression():
@@ -104,10 +102,9 @@ def test_evaluate_expression():
 
 
 def test_expand_variables():
-    config_renderer = rendering.ConfigRenderer()
-    assert config_renderer._expand_variables("${x}", "ctx['{name}']") == "ctx['x']"
+    assert rendering.expand_variables("${x}", "ctx['{name}']") == "ctx['x']"
     assert (
-        config_renderer._expand_variables("${x} + $y", "ctx['{name}']")
+        rendering.expand_variables("${x} + $y", "ctx['{name}']")
         == "ctx['x'] + ctx['y']"
     )
 
@@ -123,6 +120,16 @@ def test_construct_quantities():
     assert config["/laser/power"].to("mW/cm^2").magnitude == pytest.approx(1000)
     assert config["/tag"] == "CW"
     assert config["/N"] == 10
+
+
+def test_only_construct_quantities_from_strings_that_look_like_a_quantity():
+    """
+    Pint is willing to treat way more text as a quantity than we want to allow.
+
+    For example, '$({$cm})' will be interpretted as a quantity. So will 'quant'.
+
+    So we only want to try to interpret something as a quantity if it starts wit a numerical value.
+    """
 
 
 def test_yaml_config_example_1():
