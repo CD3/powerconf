@@ -3,7 +3,6 @@ from typing import Annotated, List
 
 import rich
 import typer
-import yaml
 from fspathtree import fspathtree
 
 from . import rendering, utils, yaml
@@ -56,6 +55,18 @@ def render(config_file: Path, template_file: Path, output: Path):
             rendering.render_mustache_template_file(
                 template_file, config, output / output_filename
             )
+
+
+@app.command()
+def print_instances(config_file: Path):
+    """
+    Print instances of configuration trees generated from the config.
+    """
+    configs = yaml.powerload(config_file)
+    configs = utils.apply_transform(
+        configs, lambda p, n: str(n), lambda p, n: hasattr(n, "magnitude")
+    )
+    print("\n---\n".join(map(lambda c: yaml.dump(c.tree), configs)))
 
 
 @app.command()
