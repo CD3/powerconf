@@ -1,10 +1,13 @@
+import pathlib
+from . import unit_test_utils
+
 import pint
 import pyparsing
 import pytest
 import yaml
 from fspathtree import fspathtree
 
-from powerconf import expressions, parsing, loaders, rendering
+from powerconf import expressions, loaders, parsing, rendering
 
 ureg = pint.UnitRegistry()
 Q_ = ureg.Quantity
@@ -364,3 +367,35 @@ def test_rendering_complex_dependencies():
 
     assert config["/laser/one_over_e_diameter"].magnitude == pytest.approx(1 / 2**0.5)
     assert config["/laser/power"].magnitude == pytest.approx(1 * 3.14159 / 8)
+
+
+def test_include_branches_yaml(tmp_path):
+
+    with unit_test_utils.working_directory(tmp_path):
+
+        text1 = """
+    simulation:
+        grid:
+            x:
+                '@include' : grid.yml
+            y:
+                '@include' : grid.yml
+    """
+
+        text2 = """
+    min: 0 cm
+    max: 1 cm
+    N: 101
+        """
+
+        pathlib.Path("grid.yml").write_text(text2)
+
+        config = loaders.yaml(text1)
+        config = rendering.load_includes(config, loaders.yaml)
+
+        assert "simulation/grid/x/min" in config
+        assert "simulation/grid/x/max" in config
+        assert "simulation/grid/x/N" in config
+        assert "simulation/grid/y/min" in config
+        assert "simulation/grid/y/max" in config
+        assert "simulation/grid/y/N" in config

@@ -133,12 +133,23 @@ def contains_variable(text: Any):
     results = parsing.variable.search_string(text)
     return len(results) > 0
 
-def load_includes(config:fspathtree, loader=None):
+
+def load_includes(config: fspathtree, loader):
     """
-    Find all '@include' branches in the tree and load the branch from 
+    Find all '@include' branches in the tree and load the branch from
     a file.
+
+    @param config: the configuration tree to expand. If the tree does not include any '@include' leafs, it will not be changes.
+    @param loader: a function that accepts a pathlib.Path argument and loads the contents of the file into an fspathtree that is returned.
     """
-    pass
+    for leaf in config.get_all_leaf_node_paths(
+        predicate=lambda p, n: p.name == "@include"
+    ):
+        subtree = loader(Path(config[leaf]))
+        config[leaf.parent] = subtree.tree
+
+    return config
+
 
 class ConfigRenderer:
     def __init__(self, expression_evaluator=None):
