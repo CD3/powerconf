@@ -146,6 +146,7 @@ def load_includes(config: fspathtree, loader):
         predicate=lambda p, n: p.name == "@include"
     ):
         subtree = loader(Path(config[leaf]))
+        subtree = load_includes(subtree,loader)
         config[leaf.parent] = subtree.tree
 
     return config

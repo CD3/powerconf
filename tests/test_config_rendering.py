@@ -1,5 +1,4 @@
 import pathlib
-from . import unit_test_utils
 
 import pint
 import pyparsing
@@ -8,6 +7,8 @@ import yaml
 from fspathtree import fspathtree
 
 from powerconf import expressions, loaders, parsing, rendering
+
+from . import unit_test_utils
 
 ureg = pint.UnitRegistry()
 Q_ = ureg.Quantity
@@ -399,3 +400,59 @@ def test_include_branches_yaml(tmp_path):
         assert "simulation/grid/y/min" in config
         assert "simulation/grid/y/max" in config
         assert "simulation/grid/y/N" in config
+
+        assert config["simulation/grid/x/min"] == "0 cm"
+        assert config["simulation/grid/x/max"] == "1 cm"
+        assert config["simulation/grid/x/N"] == 101
+        assert config["simulation/grid/y/min"] == "0 cm"
+        assert config["simulation/grid/y/max"] == "1 cm"
+        assert config["simulation/grid/y/N"] == 101
+
+
+def test_multi_level_include_branches_yaml(tmp_path):
+
+    with unit_test_utils.working_directory(tmp_path):
+
+        text1 = """
+    simulation:
+        grid:
+            '@include' : grid.yml
+    """
+
+        text2 = """
+    x: 
+        '@include' : x-grid.yml
+    y: 
+        '@include' : x-grid.yml
+    """
+        text3 = """
+    min: 0 cm
+    max: 1 cm
+    N: 101
+        """
+        text4 = """
+    min: 1 cm
+    max: 2 cm
+    N: 201
+        """
+
+        pathlib.Path("grid.yml").write_text(text2)
+        pathlib.Path("x-grid.yml").write_text(text3)
+        pathlib.Path("y-grid.yml").write_text(text4)
+
+        config = loaders.yaml(text1)
+        config = rendering.load_includes(config, loaders.yaml)
+
+        assert "simulation/grid/x/min" in config
+        assert "simulation/grid/x/max" in config
+        assert "simulation/grid/x/N" in config
+        assert "simulation/grid/y/min" in config
+        assert "simulation/grid/y/max" in config
+        assert "simulation/grid/y/N" in config
+
+        assert config["simulation/grid/x/min"] == "0 cm"
+        assert config["simulation/grid/x/max"] == "1 cm"
+        assert config["simulation/grid/x/N"] == 101
+        assert config["simulation/grid/y/min"] == "0 cm"
+        assert config["simulation/grid/y/max"] == "1 cm"
+        assert config["simulation/grid/y/N"] == 101
