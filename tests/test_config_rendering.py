@@ -4,7 +4,7 @@ import pytest
 import yaml
 from fspathtree import fspathtree
 
-from powerconf import expressions, parsing, readers, rendering
+from powerconf import expressions, parsing, loaders, rendering
 
 ureg = pint.UnitRegistry()
 Q_ = ureg.Quantity
@@ -292,7 +292,7 @@ two: 2
 three : 3
     """
 
-    configs = readers.load_yaml_docs(text)
+    configs = loaders.yaml_all_docs(text)
     configs = rendering.expand_partial_configs(configs)
 
     assert len(configs) == 1
@@ -301,7 +301,7 @@ three : 3
     assert "two" in configs[0]
     assert "three" in configs[0]
 
-    configs = readers.load_yaml_docs(text)
+    configs = loaders.yaml_all_docs(text)
     configs = rendering.expand_partial_configs(configs, include_base=True)
 
     assert len(configs) == 2
@@ -334,7 +334,7 @@ sim:
             N: $( ($max-$min)/($/sim/grid/res) + 1)
     """
 
-    configs = readers.load_yaml_docs(text)
+    configs = loaders.yaml_all_docs(text)
     configs = rendering.expand_partial_configs(configs)
 
     assert len(configs) == 1

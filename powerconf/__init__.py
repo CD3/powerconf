@@ -1,4 +1,4 @@
-from . import readers as readers
+from . import loaders as loaders
 from . import rendering as rendering
 from . import utils as utils
 from . import yaml as yaml

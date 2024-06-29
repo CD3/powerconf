@@ -2,8 +2,9 @@ import pathlib
 from typing import List
 
 from fspathtree import fspathtree
+from yaml import *
 
-from . import readers, rendering
+from . import loaders, rendering
 
 
 def powerload(config_file: pathlib.Path) -> List[fspathtree]:
@@ -25,7 +26,7 @@ def powerload(config_file: pathlib.Path) -> List[fspathtree]:
     """
     config_renderer = rendering.ConfigRenderer()
 
-    config_docs = readers.load_yaml_docs(config_file)
+    config_docs = loaders.yaml_all_docs(config_file)
     complete_configs = rendering.expand_partial_configs(config_docs)
     unrendered_configs = []
     for c in complete_configs:

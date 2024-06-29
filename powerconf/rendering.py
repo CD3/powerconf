@@ -133,6 +133,12 @@ def contains_variable(text: Any):
     results = parsing.variable.search_string(text)
     return len(results) > 0
 
+def load_includes(config:fspathtree, loader=None):
+    """
+    Find all '@include' branches in the tree and load the branch from 
+    a file.
+    """
+    pass
 
 class ConfigRenderer:
     def __init__(self, expression_evaluator=None):
