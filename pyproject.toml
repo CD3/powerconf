@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "powerconf"
-version = "0.1.1"
+version = "0.1.2"
 description = ""
 authors = ["CD Clark III <clifton.clark@gmail.com>"]
 readme = "README.md"
