@@ -7,22 +7,20 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.10"
-pint = "^0.24"
-fspathtree = "^0.9"
-pyparsing = "^3.1.2"
-networkx = "^3.3"
-pystache = "^0.6.5"
+pint = ">=0.20"
+fspathtree = ">=0.9"
+pyparsing = ">=3.1"
+networkx = ">=3.3"
+pystache = ">=0.6"
+typer = ">=0.12"
 
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.2.2"
+pytest-benchmark = "^4.0.0"
 pyyaml = "^6.0.1"
-matplotlib = "^3.9.0"
 numpy = "^2.0.0"
 
-
-[tool.poetry.group.cli.dependencies]
-typer = "^0.12.3"
 
 [build-system]
 requires = ["poetry-core"]
