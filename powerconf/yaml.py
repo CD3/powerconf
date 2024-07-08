@@ -28,6 +28,9 @@ def powerload(config_file: pathlib.Path) -> List[fspathtree]:
 
     config_docs = loaders.yaml_all_docs(config_file)
     complete_configs = rendering.expand_partial_configs(config_docs)
+    complete_configs = [
+        rendering.load_includes(c, loaders.yaml) for c in complete_configs
+    ]
     unrendered_configs = []
     for c in complete_configs:
         unrendered_configs += config_renderer.expand_batch_nodes(c)

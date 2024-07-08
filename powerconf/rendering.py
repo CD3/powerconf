@@ -8,12 +8,9 @@ import pint
 import pystache
 from fspathtree import fspathtree
 
-from . import expressions, graphs, parsing
+from . import expressions, graphs, parsing, units
 
-__local_Quantity = (
-    pint.UnitRegistry().Quantity
-)  # a local instance for testing if strings are quantities.
-
+__local_Quantity = units.Q_
 
 def expand_partial_configs(configs: List[fspathtree], include_base=False):
     """
@@ -153,13 +150,13 @@ def load_includes(config: fspathtree, loader):
 
 
 class ConfigRenderer:
+    Quantity = units.Q_
+
     def __init__(self, expression_evaluator=None):
         if expression_evaluator is None:
             expression_evaluator = expressions.ExecExpressionEvaluator()
 
         self.expression_evaluator = expression_evaluator
-        self.ureg = pint.UnitRegistry()
-        self.Quantity = self.ureg.Quantity
 
     def expand_and_render(self, config):
         """Expand batch configurations and render each instance."""
