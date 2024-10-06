@@ -9,3 +9,5 @@ wheels/
 # venv
 .venv
 .python-version
+requirements-dev.lock
+requirements.lock
