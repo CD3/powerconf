@@ -1,7 +1,4 @@
 set positional-arguments
 test *args:
-        poetry run pytest -s "$@"
+        rye run pytest -s "$@"
 
-pub:
-  rm dist -rf
-  poetry publish --build

@@ -1,3 +1,4 @@
+import importlib
 from pathlib import Path
 from typing import Annotated, List
 
@@ -5,10 +6,15 @@ import rich
 import typer
 from fspathtree import fspathtree
 
+import powerconf
+
 from . import rendering, utils, yaml
 
 app = typer.Typer()
 console = rich.console.Console()
+
+__version__ = importlib.metadata.version("powerconf")
+state = {"verbose": 0}
 
 
 def load_config(config_file: Path):
@@ -23,6 +29,23 @@ def load_config(config_file: Path):
         configs.append(config)
 
     return configs
+
+
+@app.callback()
+def main():
+    """
+    The `powerconf` command is a CLI for the powerconf python module. It allows you to read
+    a configuration file, evaluate all expression, expand all batch nodes, etc, and write
+    the "rendered" configurations to a file(s).
+    """
+
+
+@app.command()
+def version():
+    """
+    Print the version number.
+    """
+    console.print(f"version: {__version__}")
 
 
 @app.command()
@@ -67,14 +90,3 @@ def print_instances(config_file: Path):
         configs, lambda p, n: str(n), lambda p, n: hasattr(n, "magnitude")
     )
     print("\n---\n".join(map(lambda c: yaml.dump(c.tree), configs)))
-
-
-@app.command()
-def help():
-    print(
-        """
-The `powerconf` command is a CLI for the powerconf python module. It allows you to read
-a configuration file, evaluate all expression, expand all batch nodes, etc, and write
-the "rendered" configurations to a file(s).
-"""
-    )
