@@ -1,6 +1,9 @@
+import contextlib
 import hashlib
 import json
+import pathlib
 import typing
+import os
 
 from fspathtree import fspathtree
 
@@ -53,3 +56,15 @@ def apply_transform(
             config[p] = transform(p, config[p])
 
     return config
+
+
+@contextlib.contextmanager
+def working_directory(path):
+    path = pathlib.Path(path)
+    path.mkdir(exist_ok=True, parents=True)
+    last_dir = os.getcwd()
+    os.chdir(path)
+    try:
+        yield
+    finally:
+        os.chdir(last_dir)

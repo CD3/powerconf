@@ -14,6 +14,8 @@ simulation:
 # all quantities need to be converted to ACME internal units (cgs)
 # and turned into plain numbers.
 acme:
+    simulation:
+      output_file: acme-ouput-$(${../grid/x/n}).txt
     grid:
       x:
         n: $($/simulation/grid/x/n)

@@ -1,3 +1,4 @@
+import pathlib
 import pickle
 import subprocess
 import sys
@@ -39,6 +40,28 @@ class ExecExpressionEvaluator(ExpressionEvaluator):
             self.add_global("numpy", numpy)
         except:
             pass
+
+        extension_file = pathlib.Path("powerconf_extensions.py")
+        if extension_file.exists():
+            try:
+                import importlib
+
+                spec = importlib.util.spec_from_file_location(
+                    "powerconf_extensions", extension_file
+                )
+                powerconf_extensions = importlib.util.module_from_spec(spec)
+                sys.modules["powerconf_extensions"] = powerconf_extensions
+                spec.loader.exec_module(powerconf_extensions)
+                for obj in filter(
+                    lambda x: not x.startswith("__"), dir(powerconf_extensions)
+                ):
+                    self.add_global(obj, powerconf_extensions.__dict__[obj])
+
+                self.add_global("powerconf_extensions", powerconf_extensions)
+            except Exception as e:
+                raise RuntimeError(
+                    f"There was a problem loading the extensions file ({extension_file}). ERROR: {e}"
+                )
 
     def add_global(self, name, obj):
         self.globals[name] = obj

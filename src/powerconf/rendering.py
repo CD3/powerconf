@@ -12,6 +12,7 @@ from . import expressions, graphs, parsing, units
 
 __local_Quantity = units.Q_
 
+
 def expand_partial_configs(configs: List[fspathtree], include_base=False):
     """
     Give a list of configuration trees, treat the frist tree
@@ -227,7 +228,7 @@ class ConfigRenderer:
         self, config: fspathtree, graph: graphs.DependencyGraph
     ):
         """Evaluate the expressions in a configuration tree, using a graph of the tree dependencies to determine the render order."""
-        # We need to determine which the order to evaluate evaluate the nodes of the config gree.
+        # We need to determine which the to evaluate evaluate the nodes of the config gree.
         # We have a graph that describes the dependencies. each node is the graph is a leaf node
         # in the tree, and the edges represent dependencies between nodes.
         # Consider an example,
@@ -238,7 +239,7 @@ class ConfigRenderer:
         #           / \ /
         #          D   E
         #
-        # Assume all edgest are directed DOWN.
+        # Assume all edges are directed DOWN.
         # B, D, E and Z then have no dependencies. All of their edges are "in" edges,
         # they have no "out" edges.
         #
@@ -255,15 +256,15 @@ class ConfigRenderer:
             ),
         )
         # Now we need to render nodes that have dependencies, but we need to determine the order that this can be
-        # done first. In the above example, we can evaluate A unit B and C are evaluated. We can evaluate C unilt D and E
+        # done first. In the above example, we can't evaluate A until B and C are evaluated. We can't evaluate C until D and E
         # are evaluated.
         #
         # With networkx, we can easily get a list of all ancestors of a node. For node E, this would be [C,Y,A,X]
         # Note: with the direction of our edges, an ancestor _depends_ on the node. So C is an ancestor of E, even
         # though it seems more natural to consider E the ancestor of C. If we wanted E to be the ancestor of C,
-        # we would need to direct our edgest to point from dependencies to dependences.
+        # we would need to direct our edges to point from dependencies to dependents.
 
-        # find all root dependencies. those nodes that don't depend on any others, but are depended on by others
+        # Find all root dependencies. those nodes that don't depend on any others, but are depended on by others
         # thse are all nodes with out_degrees == 0 and in_degrees > 0
         root_dependencies = list(
             filter(

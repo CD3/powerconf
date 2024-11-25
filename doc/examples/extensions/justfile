@@ -1,0 +1,2 @@
+run:
+  rye run powerconf print-instances config.yml 

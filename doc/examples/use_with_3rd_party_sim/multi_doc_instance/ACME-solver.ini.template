@@ -1,3 +1,5 @@
+[simulation]
+output_file = {{acme/simulation/output_file}}
 [grid.x]
 min = {{acme/grid/x/min}}
 max = {{acme/grid/x/max}}

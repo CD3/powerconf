@@ -1,0 +1,18 @@
+grid:
+  x:
+    res: 10 um
+    max: 1.5 mm
+    n: $( ${max} / ${res} )
+
+laser:
+  wavelength: 532 nm
+
+tissue:
+  absorption_coefficient: $( RPE( ${/laser/wavelength}) )
+
+acme:
+  grid:
+    x: $( ito(${/grid/x/n},""))
+    max: $( fto( ${/grid/x/max}, 'cm')  )
+
+

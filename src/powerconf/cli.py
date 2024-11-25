@@ -1,4 +1,6 @@
+import copy
 import importlib
+import pathlib
 from pathlib import Path
 from typing import Annotated, List
 
@@ -8,7 +10,7 @@ from fspathtree import fspathtree
 
 import powerconf
 
-from . import rendering, utils, yaml
+from . import loaders, rendering, utils, yaml
 
 app = typer.Typer()
 console = rich.console.Console()
@@ -90,3 +92,45 @@ def print_instances(config_file: Path):
         configs, lambda p, n: str(n), lambda p, n: hasattr(n, "magnitude")
     )
     print("\n---\n".join(map(lambda c: yaml.dump(c.tree), configs)))
+
+
+@app.command()
+def run(
+    tool: Annotated[str, typer.Argument(help="The tool (i.e. model) to run.")],
+    config_file: Annotated[
+        pathlib.Path,
+        typer.Argument(help="Confuration file describing how each model is ran."),
+    ] = pathlib.Path("powerconf-run-config.yml"),
+):
+    run_configuration = loaders.yaml(config_file)
+    # check configuration
+    if "config" not in run_configuration:
+        raise typer.Exit(f"No 'config' key in {config_file}.")
+    model_config_file = pathlib.Path(run_configuration["config"])
+    if not model_config_file.exists():
+        raise typer.Exit(f"File '{model_config_file}' not found.")
+    if tool not in run_configuration:
+        raise typer.Exit(f"No configuration for '{tool}' in {config_file}.")
+
+    # load all model configurations
+    model_configurations = yaml.powerload(model_config_file)
+    config_renderer = rendering.ConfigRenderer()
+    for model_configuration in model_configurations:
+        # model_configuration is a instance of the 
+        run_configuration_instance = copy.deepcopy(run_configuration)
+        run_configuration_instance["config"] = model_configuration.tree
+        run_configuration_instance = config_renderer.render(
+            run_configuration_instance[tool]
+        )
+        template_file = pathlib.Path(
+            run_configuration_instance["run/template_file"]
+        ).absolute()
+        wd = run_configuration_instance["run/working_directory"]
+        with utils.working_directory(wd):
+            _id = utils.get_id(model_configuration)
+            output_file = pathlib.Path("CONFIG-" + _id + ".txt")
+            rendering.render_mustache_template_file(
+                template_file, model_configuration, output_file
+            )
+            for cmd in run_configuration_instance["run/cmd"]:
+                print(cmd)

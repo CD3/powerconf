@@ -4,7 +4,7 @@ Powerful configuration tools for numerical simulation.
 
 `powerconf` allows you to write configuration files for things like physics simulations
 with support for variable interpolation and expression evaluation. Consider a simulation
-will solve some partial differential equation on a 2-dimensional Cartesian grid. Perhaps
+that will solve some partial differential equation on a 2-dimensional Cartesian grid. Perhaps
 the simulation itself requires us to set the min and max range and the number of points
 to use along each axis. A simple YAML configuration for the simulation might look something
 like this
