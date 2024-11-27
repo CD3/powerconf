@@ -6,7 +6,7 @@ import pytest
 import yaml
 from fspathtree import fspathtree
 
-from powerconf import expressions, loaders, parsing, rendering
+from powerconf import expressions, loaders, parsing, rendering, units
 
 from . import unit_test_utils
 
@@ -130,10 +130,19 @@ def test_only_construct_quantities_from_strings_that_look_like_a_quantity():
     """
     Pint is willing to treat way more text as a quantity than we want to allow.
 
-    For example, '$({$cm})' will be interpretted as a quantity. So will 'quant'.
+    For example, '$(${cm})' will be interpretted as a quantity. So will 'quant'.
 
     So we only want to try to interpret something as a quantity if it starts wit a numerical value.
     """
+
+    assert rendering.try_construct_quantity("4 m").magnitude == 4
+
+    assert units.Q_("cm") is not None
+    assert units.Q_("cm").magnitude == 1
+    assert units.Q_("$(${cm})") is not None
+    assert units.Q_("$(${cm})").magnitude == 1
+    assert rendering.try_construct_quantity("cm") == "cm"
+    assert rendering.try_construct_quantity("$(${cm})") == "$(${cm})"
 
 
 def test_yaml_config_example_1():
@@ -456,3 +465,47 @@ def test_multi_level_include_branches_yaml(tmp_path):
         assert config["simulation/grid/y/min"] == "0 cm"
         assert config["simulation/grid/y/max"] == "1 cm"
         assert config["simulation/grid/y/N"] == 101
+
+
+def test_yaml_config_var_name_errors():
+    config_text = """
+layers:
+    - name: layer 1
+      thickness: 10 um
+grid:
+    x:
+      max: $( ${../layers/0/thickness}) # element name does not walk up the tree far enough
+"""
+
+    config = fspathtree(yaml.safe_load(config_text))
+
+    config_renderer = rendering.ConfigRenderer()
+
+    with pytest.raises(KeyError) as e:
+        config = config_renderer.render(config)
+
+    assert (
+        e.value.args[0]
+        == "Could not find path element 'layers' while parsing path '/grid/layers/0/thickness'"
+    )
+
+    config_text = """
+layers:
+    - name: layer 1
+      thickness: 10 um
+grid:
+    x:
+      max: $( ${/layer/0/thickness})
+"""
+
+    config = fspathtree(yaml.safe_load(config_text))
+
+    config_renderer = rendering.ConfigRenderer()
+
+    with pytest.raises(KeyError) as e:
+        config = config_renderer.render(config)
+
+    assert (
+        e.value.args[0]
+        == "Could not find path element 'layer' while parsing path '/layer/0/thickness'"
+    )
