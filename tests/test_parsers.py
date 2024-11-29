@@ -43,3 +43,16 @@ def test_expressions():
 
     result = parsing.expression.parse_string("$( $x + ( 1 + 2 + $y))")
     assert result["expression body"] == "( $x + ( 1 + 2 + $y))"
+
+    # result = parsing.expression_body.parse_string(result["expression body"])
+
+
+def test_expressions_with_filters():
+
+    result = parsing.expression.parse_string("$( $x + $y | to('cm') )")
+    assert result["expression body"] == "( $x + $y | to('cm') )"
+
+    code_and_filter = result["expression body"][1:-1].split("|")
+
+    assert code_and_filter[0] == " $x + $y "
+    assert code_and_filter[1] == " to('cm') "
