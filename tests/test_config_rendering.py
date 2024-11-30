@@ -6,7 +6,7 @@ import pytest
 import yaml
 from fspathtree import fspathtree
 
-from powerconf import expressions, loaders, parsing, rendering, units
+from powerconf import expressions, loaders, parsing, rendering, units, utils
 
 from . import unit_test_utils
 
@@ -486,7 +486,7 @@ grid:
 
     assert (
         e.value.args[0]
-        == "Could not find path element 'layers' while parsing path '/grid/layers/0/thickness'"
+        == "Error while parsing path '/grid/layers/0/thickness'. Could not find path element 'layers'."
     )
 
     config_text = """
@@ -507,5 +507,52 @@ grid:
 
     assert (
         e.value.args[0]
-        == "Could not find path element 'layer' while parsing path '/layer/0/thickness'"
+        == "Error while parsing path '/layer/0/thickness'. Could not find path element 'layer'."
     )
+
+
+def test_creating_filenames():
+    """
+    Demonstrate how we can powerconf to generate filenames (for output for example) based on config parameters.
+    """
+
+    config_text = """
+layers:
+    - name: layer 1
+      thickness: 10 um
+      absorption: 2 1 / cm
+grid:
+    x:
+      max: $( ${/layers/0/thickness})
+laser:
+    radius: 100 um
+    irradiance: 2 W /cm^2
+
+simulation: 
+    output: Tvst-$(${/layers/0/absorption}.to("1/cm").magnitude|fmt(_1,".0f"))_inv_cm-$(${/laser/radius}.to("um").magnitude|fmt(_1,".0f"))_um.txt
+    id: $( id(ctx))
+"""
+
+    config = fspathtree(yaml.safe_load(config_text))
+
+    config_renderer = rendering.ConfigRenderer()
+
+    def del_space(text):
+        return text.replace(" ", "_")
+
+    def to(q, u):
+        return q.to(u).magnitude
+
+    def fmt(v, spec=""):
+        return ("{:" + spec + "}").format(v)
+
+    assert fmt(10) == "10"
+    config_renderer.expression_evaluator.add_global("del_space", del_space)
+    config_renderer.expression_evaluator.add_global("fmt", fmt)
+    config_renderer.expression_evaluator.add_global("to", to)
+    config_renderer.expression_evaluator.add_global("id", utils.get_id)
+
+    config = config_renderer.render(config)
+
+    assert config["/simulation/output"] == "Tvst-2_inv_cm-100_um.txt"
+    assert config["/simulation/id"] == "1c8c60bee71afc4f3143ef6edf3ca971"
