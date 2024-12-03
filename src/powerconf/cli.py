@@ -1,6 +1,7 @@
 import copy
 import importlib
 import pathlib
+import subprocess
 from pathlib import Path
 from typing import Annotated, List
 
@@ -99,38 +100,40 @@ def run(
     tool: Annotated[str, typer.Argument(help="The tool (i.e. model) to run.")],
     config_file: Annotated[
         pathlib.Path,
-        typer.Argument(help="Confuration file describing how each model is ran."),
-    ] = pathlib.Path("powerconf-run-config.yml"),
+        typer.Argument(
+            help="Confuration file. Includes model configuration and configuration for `powerconf run`."
+        ),
+    ],
 ):
-    run_configuration = loaders.yaml(config_file)
-    # check configuration
-    if "config" not in run_configuration:
-        raise typer.Exit(f"No 'config' key in {config_file}.")
-    model_config_file = pathlib.Path(run_configuration["config"])
-    if not model_config_file.exists():
-        raise typer.Exit(f"File '{model_config_file}' not found.")
-    if tool not in run_configuration:
-        raise typer.Exit(f"No configuration for '{tool}' in {config_file}.")
-
-    # load all model configurations
-    model_configurations = yaml.powerload(model_config_file)
-    config_renderer = rendering.ConfigRenderer()
-    for model_configuration in model_configurations:
-        # model_configuration is a instance of the 
-        run_configuration_instance = copy.deepcopy(run_configuration)
-        run_configuration_instance["config"] = model_configuration.tree
-        run_configuration_instance = config_renderer.render(
-            run_configuration_instance[tool]
-        )
-        template_file = pathlib.Path(
-            run_configuration_instance["run/template_file"]
-        ).absolute()
-        wd = run_configuration_instance["run/working_directory"]
-        with utils.working_directory(wd):
-            _id = utils.get_id(model_configuration)
-            output_file = pathlib.Path("CONFIG-" + _id + ".txt")
-            rendering.render_mustache_template_file(
-                template_file, model_configuration, output_file
+    configs = yaml.powerload(config_file)
+    for i, config in enumerate(configs):
+        if f"/powerconf-run/{tool}" not in config:
+            raise typer.Exit(
+                f"No 'powerconf-run/{tool}' key in config instance {i} of {config_file}. If you run `powerconf print-instance {config_file}`, each instance should have a `powerconf-run/{tool}` branch."
             )
-            for cmd in run_configuration_instance["run/cmd"]:
-                print(cmd)
+        tool_config = config[f"/powerconf-run/{tool}"]
+        template_config_file = pathlib.Path(
+            tool_config["template_config_file"]
+        ).absolute()
+        rendered_config_file = Path(tool_config["rendered_config_file"])
+        working_directory = Path(tool_config.get("working_directory", ".")).absolute()
+        with utils.working_directory(working_directory):
+            if not rendered_config_file.parent.exists():
+                rendered_config_file.parent.mkdir(exist_ok=True, parents=True)
+
+            rendering.render_mustache_template_file(
+                template_config_file, config, rendered_config_file
+            )
+
+            for command in tool_config["command"]:
+                wd = working_directory
+                cmd = command
+                if hasattr(command, "tree"):
+                    cmd = command["command"]
+                    wd = Path(command.get("working_directory", ".")).absolute()
+                with utils.working_directory(wd):
+                    console.print(f"Running command: {cmd}")
+                    console.print(f"Working Directory: {wd}")
+                    subprocess.run(cmd, shell=True)
+                    console.print("done")
+                    console.print()

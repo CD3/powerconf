@@ -1,0 +1,2 @@
+acme:
+  rye run powerconf run acme CONFIG-simple_layer.yml
