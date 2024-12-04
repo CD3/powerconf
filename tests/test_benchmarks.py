@@ -1,6 +1,9 @@
+import pytest
+
 from powerconf import loaders, rendering
 
 
+@pytest.mark.benchmark
 def test_benchmark_chained_dependencies(benchmark):
     text = """
   a : 1
@@ -19,7 +22,7 @@ def test_benchmark_chained_dependencies(benchmark):
     config = loaders.yaml(text)
     config_renderer = rendering.ConfigRenderer()
     config_renderer.render(config)
-    assert config['b'] == "$(${a}+1)"
+    assert config["b"] == "$(${a}+1)"
 
     benchmark(config_renderer.render, config)
 
@@ -29,6 +32,8 @@ def test_benchmark_chained_dependencies(benchmark):
     assert config["b"] == 2
     assert config["k"] == 11
 
+
+@pytest.mark.benchmark
 def test_benchmark_chained_dependencies_reverse(benchmark):
     text = """
   a : $(${b}+1)
@@ -47,7 +52,7 @@ def test_benchmark_chained_dependencies_reverse(benchmark):
     config = loaders.yaml(text)
     config_renderer = rendering.ConfigRenderer()
     config_renderer.render(config)
-    assert config['b'] == "$(${c}+1)"
+    assert config["b"] == "$(${c}+1)"
 
     benchmark(config_renderer.render, config)
 

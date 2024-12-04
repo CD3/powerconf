@@ -1,7 +1,9 @@
 import copy
 import importlib
+import os
 import pathlib
 import subprocess
+import sys
 from pathlib import Path
 from typing import Annotated, List
 
@@ -14,7 +16,9 @@ import powerconf
 from . import loaders, rendering, utils, yaml
 
 app = typer.Typer()
+
 console = rich.console.Console()
+error_console = rich.console.Console(stderr=True)
 
 __version__ = importlib.metadata.version("powerconf")
 state = {"verbose": 0}
@@ -92,7 +96,7 @@ def print_instances(config_file: Path):
     configs = utils.apply_transform(
         configs, lambda p, n: str(n), lambda p, n: hasattr(n, "magnitude")
     )
-    print("\n---\n".join(map(lambda c: yaml.dump(c.tree), configs)))
+    console.print("\n---\n".join(map(lambda c: yaml.dump(c.tree), configs)))
 
 
 @app.command()
@@ -105,25 +109,55 @@ def run(
         ),
     ],
 ):
+
+    # async run_command(sem, cmd):
+    #     async with sem:
+    #         process = await asyncio.create_subprocess_shell(cmd)
+    #         await process.wait()
+
+    # async def run_commands(self, cmds):
+    #     semaphore = asyncio.Semaphore(os.cpu_count())
+    #     tasks = [
+    #         asyncio.create_task(self.async_run_command(semaphore, cmd)) for cmd in cmds
+    #     ]
+    #     await asyncio.gather(*tasks)
+
+    # def run(self):
+    #     asyncio.run(self.async_run_commands(self.submit_scripts))
+
     configs = yaml.powerload(config_file)
     for i, config in enumerate(configs):
         if f"/powerconf-run/{tool}" not in config:
-            raise typer.Exit(
+            error_console.print(
                 f"No 'powerconf-run/{tool}' key in config instance {i} of {config_file}. If you run `powerconf print-instance {config_file}`, each instance should have a `powerconf-run/{tool}` branch."
             )
+            raise typer.Exit(code=1)
         tool_config = config[f"/powerconf-run/{tool}"]
-        template_config_file = pathlib.Path(
-            tool_config["template_config_file"]
-        ).absolute()
-        rendered_config_file = Path(tool_config["rendered_config_file"])
+
+        template_config_file = tool_config.get("template_config_file",None)
+        rendered_config_file = tool_config.get("rendered_config_file",None)
+
+        if template_config_file is not None:
+            template_config_file = Path( template_config_file).absolute()
+        if rendered_config_file is not None:
+            rendered_config_file = Path(rendered_config_file)
+
+        if rendered_config_file is not None and template_config_file is None:
+            error_console.print(f"Invalid configuration. `powerconf-run/{tool}/rendered_config_file` was found but `powerconf-run/{tool}/template_config_file` was not. If one is given, both must be given.")
+            raise typer.Exit(code=2)
+
+        if template_config_file is not None and rendered_config_file is None:
+            error_console.print(f"Invalid configuration. `powerconf-run/{tool}/template_config_file` was found but `powerconf-run/{tool}/rendered_config_file` was not. If one is given, both must be given.")
+            raise typer.Exit(code=2)
+
         working_directory = Path(tool_config.get("working_directory", ".")).absolute()
         with utils.working_directory(working_directory):
-            if not rendered_config_file.parent.exists():
-                rendered_config_file.parent.mkdir(exist_ok=True, parents=True)
-
-            rendering.render_mustache_template_file(
-                template_config_file, config, rendered_config_file
-            )
+            if template_config_file is not None:
+                if not rendered_config_file.parent.exists():
+                    rendered_config_file.parent.mkdir(exist_ok=True, parents=True)
+                rendering.render_mustache_template_file(
+                    template_config_file, config, rendered_config_file
+                )
 
             for command in tool_config["command"]:
                 wd = working_directory
@@ -132,8 +166,17 @@ def run(
                     cmd = command["command"]
                     wd = Path(command.get("working_directory", ".")).absolute()
                 with utils.working_directory(wd):
-                    console.print(f"Running command: {cmd}")
+                    console.print(f"Running Command: {cmd}")
                     console.print(f"Working Directory: {wd}")
-                    subprocess.run(cmd, shell=True)
-                    console.print("done")
+                    result = subprocess.run(
+                        cmd,
+                        shell=True,
+                        stderr=subprocess.STDOUT,
+                        stdout=subprocess.PIPE,
+                    )
+                    console.print(f"{cmd} Finished")
+                    console.print(f"{cmd} Output")
+                    console.print(f"vvvvvvvvvvvvvvvvvvvvvvvv")
+                    console.print(result.stdout.decode())
+                    console.print(f"^^^^^^^^^^^^^^^^^^^^^^^^")
                     console.print()

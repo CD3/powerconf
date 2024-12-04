@@ -35,3 +35,7 @@ allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/powerconf"]
+
+[tool.pytest.ini_options]
+addopts = "-m 'not benchmark'"
+markers = [ "benchmark: marks tests that are benchmarks (and take a while to run)." ]

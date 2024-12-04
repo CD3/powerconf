@@ -33,8 +33,8 @@ powerconf-run:
     working_directory: acme-workspace
     command:
       - working_directory: output
-        command: python ../../acme ../$(${../../rendered_config_file})
-      - echo DONE
+        command: python ../../acme ../$(${../../rendered_config_file}) > acme.stdout
+      - echo "DONE"
 ---
 simulation:
   grid:
