@@ -1,5 +1,6 @@
 import copy
 import importlib
+import multiprocessing
 import os
 import pathlib
 import subprocess
@@ -99,56 +100,18 @@ def print_instances(config_file: Path):
     console.print("\n---\n".join(map(lambda c: yaml.dump(c.tree), configs)))
 
 
-@app.command()
-def run(
-    tool: Annotated[str, typer.Argument(help="The tool (i.e. model) to run.")],
-    config_file: Annotated[
-        pathlib.Path,
-        typer.Argument(
-            help="Confuration file. Includes model configuration and configuration for `powerconf run`."
-        ),
-    ],
-):
+def run_config(config, tool):
+    with console.capture() as capture:
 
-    # async run_command(sem, cmd):
-    #     async with sem:
-    #         process = await asyncio.create_subprocess_shell(cmd)
-    #         await process.wait()
-
-    # async def run_commands(self, cmds):
-    #     semaphore = asyncio.Semaphore(os.cpu_count())
-    #     tasks = [
-    #         asyncio.create_task(self.async_run_command(semaphore, cmd)) for cmd in cmds
-    #     ]
-    #     await asyncio.gather(*tasks)
-
-    # def run(self):
-    #     asyncio.run(self.async_run_commands(self.submit_scripts))
-
-    configs = yaml.powerload(config_file)
-    for i, config in enumerate(configs):
-        if f"/powerconf-run/{tool}" not in config:
-            error_console.print(
-                f"No 'powerconf-run/{tool}' key in config instance {i} of {config_file}. If you run `powerconf print-instance {config_file}`, each instance should have a `powerconf-run/{tool}` branch."
-            )
-            raise typer.Exit(code=1)
         tool_config = config[f"/powerconf-run/{tool}"]
 
-        template_config_file = tool_config.get("template_config_file",None)
-        rendered_config_file = tool_config.get("rendered_config_file",None)
+        template_config_file = tool_config.get("template_config_file", None)
+        rendered_config_file = tool_config.get("rendered_config_file", None)
 
         if template_config_file is not None:
-            template_config_file = Path( template_config_file).absolute()
+            template_config_file = Path(template_config_file).absolute()
         if rendered_config_file is not None:
             rendered_config_file = Path(rendered_config_file)
-
-        if rendered_config_file is not None and template_config_file is None:
-            error_console.print(f"Invalid configuration. `powerconf-run/{tool}/rendered_config_file` was found but `powerconf-run/{tool}/template_config_file` was not. If one is given, both must be given.")
-            raise typer.Exit(code=2)
-
-        if template_config_file is not None and rendered_config_file is None:
-            error_console.print(f"Invalid configuration. `powerconf-run/{tool}/template_config_file` was found but `powerconf-run/{tool}/rendered_config_file` was not. If one is given, both must be given.")
-            raise typer.Exit(code=2)
 
         working_directory = Path(tool_config.get("working_directory", ".")).absolute()
         with utils.working_directory(working_directory):
@@ -180,3 +143,46 @@ def run(
                     console.print(result.stdout.decode())
                     console.print(f"^^^^^^^^^^^^^^^^^^^^^^^^")
                     console.print()
+    return capture.get()
+
+
+@app.command()
+def run(
+    tool: Annotated[str, typer.Argument(help="The tool (i.e. model) to run.")],
+    config_file: Annotated[
+        pathlib.Path,
+        typer.Argument(
+            help="Confuration file. Includes model configuration and configuration for `powerconf run`."
+        ),
+    ],
+):
+
+    configs = yaml.powerload(config_file)
+    # check that all configs have a section for the given tool.
+    for i, config in enumerate(configs):
+        if f"/powerconf-run/{tool}" not in config:
+            error_console.print(
+                f"No 'powerconf-run/{tool}' key in config instance {i} of {config_file}. If you run `powerconf print-instance {config_file}`, each instance should have a `powerconf-run/{tool}` branch."
+            )
+            raise typer.Exit(code=1)
+        if (
+            f"/powerconf-run/{tool}/rendered_config_file" in config
+            and f"/powerconf-run/{tool}/template_config_file" not in config
+        ):
+            error_console.print(
+                f"Invalid configuration. `powerconf-run/{tool}/rendered_config_file` was found but `powerconf-run/{tool}/template_config_file` was not. If one is given, both must be given."
+            )
+            raise typer.Exit(code=2)
+
+        if (
+            f"/powerconf-run/{tool}/template_config_file" in config
+            and f"/powerconf-run/{tool}/rendered_config_file" not in config
+        ):
+            error_console.print(
+                f"Invalid configuration. `powerconf-run/{tool}/template_config_file` was found but `powerconf-run/{tool}/rendered_config_file` was not. If one is given, both must be given."
+            )
+            raise typer.Exit(code=2)
+
+    with multiprocessing.Pool() as pool:
+        for output in pool.starmap(run_config, [(config, tool) for config in configs]):
+            print(output)

@@ -1,5 +1,5 @@
-from pathlib import Path as P
 import time
+from pathlib import Path as P
 
 import pytest
 from typer.testing import CliRunner
@@ -50,7 +50,7 @@ powerconf-run:
 
         assert result.exit_code == 0
 
-        assert 'Running Command: echo \x1b[32m"HI FROM TOOL"\x1b[0m' in result.stdout
+        assert 'Running Command: echo "HI FROM TOOL"' in result.stdout
         assert "vvv\nHI FROM TOOL\n\n^^^" in result.stdout
 
 
@@ -75,10 +75,13 @@ powerconf-run:
 
         assert result.exit_code == 0
 
+        print(">>>>>>", result.stdout)
+
         assert P("OUTPUT-1.txt").exists()
         assert P("OUTPUT-2.txt").exists()
         assert P("LOG-1.txt").exists()
         assert P("LOG-2.txt").exists()
+
 
 def test_run_command_with_config_file_to_render(tmp_path):
     with working_directory(tmp_path):
@@ -99,7 +102,9 @@ powerconf-run:
         result = runner.invoke(app, ["run", "acme", "CONFIG.yml"])
         assert result.exit_code == 2
         assert "Invalid configuration" in result.stderr
-        assert "`powerconf-run/acme/template_config_file` was found but" in result.stderr
+        assert (
+            "`powerconf-run/acme/template_config_file` was found but" in result.stderr
+        )
         assert "`powerconf-run/acme/rendered_config_file` was not" in result.stderr
 
         config_text = """
@@ -119,9 +124,10 @@ powerconf-run:
         result = runner.invoke(app, ["run", "acme", "CONFIG.yml"])
         assert result.exit_code == 2
         assert "Invalid configuration" in result.stderr
-        assert "`powerconf-run/acme/rendered_config_file` was found but" in result.stderr
+        assert (
+            "`powerconf-run/acme/rendered_config_file` was found but" in result.stderr
+        )
         assert "`powerconf-run/acme/template_config_file` was not" in result.stderr
-
 
         config_text = """
 run: 1
@@ -143,24 +149,39 @@ output = {{acme/simulation/output}}
 """
         P("config-acme.txt.template").write_text(template_config_text)
 
-
         result = runner.invoke(app, ["run", "acme", "CONFIG.yml"])
 
         assert result.exit_code == 0
 
-        print( list( P().glob("*") ) )
+        print(list(P().glob("*")))
         assert P("config-acme.txt").exists()
-        assert P("config-acme.txt").read_text() == """
+        assert (
+            P("config-acme.txt").read_text()
+            == """
 output = output-1.txt
 """
+        )
 
 
-
-
-@pytest.mark.benchmark
 def test_run_command_timing(tmp_path):
 
     with working_directory(tmp_path):
+        config_text = """
+powerconf-run:
+    acme:
+        command:
+            - sleep 0.5
+    """
+
+        P("CONFIG.yml").write_text(config_text)
+
+        start = time.perf_counter()
+        result = runner.invoke(app, ["run", "acme", "CONFIG.yml"])
+        end = time.perf_counter()
+        duration = end - start
+        assert duration > 0.5
+        assert duration < 1
+
         config_text = """
 powerconf-run:
     acme:
@@ -173,37 +194,19 @@ powerconf-run:
         start = time.perf_counter()
         result = runner.invoke(app, ["run", "acme", "CONFIG.yml"])
         end = time.perf_counter()
-        duration = end-start
+        duration = end - start
         assert duration > 1
         assert duration < 2
 
         config_text = """
-powerconf-run:
-    acme:
-        command:
-            - sleep 2
-    """
-
-        P("CONFIG.yml").write_text(config_text)
-
-        start = time.perf_counter()
-        result = runner.invoke(app, ["run", "acme", "CONFIG.yml"])
-        end = time.perf_counter()
-        duration = end-start
-        assert duration > 2
-        assert duration < 3
-
-
-
-        config_text = """
-num: 
+num:
     '@batch':
       - 1
       - 2
 powerconf-run:
     acme:
         command:
-            - sleep 2
+            - sleep 1
     """
 
         P("CONFIG.yml").write_text(config_text)
@@ -211,6 +214,8 @@ powerconf-run:
         start = time.perf_counter()
         result = runner.invoke(app, ["run", "acme", "CONFIG.yml"])
         end = time.perf_counter()
-        duration = end-start
-        assert duration > 4
-        assert duration < 5
+        duration = end - start
+        # we are running each config in parallel (using multiprocessing)
+        # so the run time should be the same for two as it is for one.
+        assert duration > 1
+        assert duration < 2
