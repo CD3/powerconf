@@ -137,8 +137,9 @@ def run_config(config, tool):
                         stderr=subprocess.STDOUT,
                         stdout=subprocess.PIPE,
                     )
-                    console.print(f"{cmd} Finished")
-                    console.print(f"{cmd} Output")
+                    console.print(f"Command '{cmd}' Finished")
+                    console.print(f"Return Code: {result.returncode}")
+                    console.print(f"Output")
                     console.print(f"vvvvvvvvvvvvvvvvvvvvvvvv")
                     console.print(result.stdout.decode())
                     console.print(f"^^^^^^^^^^^^^^^^^^^^^^^^")
@@ -183,6 +184,9 @@ def run(
             )
             raise typer.Exit(code=2)
 
+    console.print("Running job for each config in parallel.")
+    console.print("Output from commands will be printed as they finish.")
     with multiprocessing.Pool() as pool:
         for output in pool.starmap(run_config, [(config, tool) for config in configs]):
             print(output)
+            print()
