@@ -2,7 +2,7 @@ set positional-arguments
 
 
 test *args:
-        rye run pytest -s "$@"
+        rye test "$@"
 
 
 make-readme:
