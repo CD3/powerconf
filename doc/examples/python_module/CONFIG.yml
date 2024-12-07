@@ -1,0 +1,19 @@
+simulation:
+  time:
+    max: 1 s
+    dt: 1 ms
+  grid:
+    resolution: 1 mm
+    x:
+      min: -1 cm
+      max: -2 cm
+      N: $( (${max} - ${min}) / ${../resolution} )
+  output_file: temperature-$(str(${/layers/0/thickness}).replace(' ','_')).txt
+
+layers:
+  - name: absorber-1
+    thickness:
+      '@batch':
+        - 1 mm
+        - 2 mm
+    
