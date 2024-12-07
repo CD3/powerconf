@@ -64,4 +64,14 @@ laser:
     assert configs[0]["/laser/pulse/N"] == 1
     assert configs[0]["/laser/profile/R"].to("cm").magnitude == pytest.approx(10e-4 / 2)
 
+
+
+    configs = yaml.powerload("CONFIG.yml")
+
+    assert len(configs) == 21
+
+    assert configs[0]["/laser/pulse/tau"].to("s").magnitude == pytest.approx(10e-6)
+    assert configs[0]["/laser/pulse/N"] == 1
+    assert configs[0]["/laser/profile/R"].to("cm").magnitude == pytest.approx(10e-4 / 2)
+
     os.chdir(orig_path)

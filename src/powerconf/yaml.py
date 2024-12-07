@@ -24,6 +24,9 @@ def powerload(config_file: pathlib.Path) -> List[fspathtree]:
 
     This is your one-stop-shop for loading powerconfigs from YAML files.
     """
+    # the user may want to pass in the filename as a string (ignoring our type hint)
+    # so let's just make sure we have a pathlib.Path
+    config_file = pathlib.Path(config_file)
     config_renderer = rendering.ConfigRenderer()
 
     config_docs = loaders.yaml_all_docs(config_file)
