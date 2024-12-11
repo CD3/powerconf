@@ -64,8 +64,6 @@ laser:
     assert configs[0]["/laser/pulse/N"] == 1
     assert configs[0]["/laser/profile/R"].to("cm").magnitude == pytest.approx(10e-4 / 2)
 
-
-
     configs = yaml.powerload("CONFIG.yml")
 
     assert len(configs) == 21

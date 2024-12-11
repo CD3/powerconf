@@ -54,9 +54,11 @@ $ pip install powerconf
 ```
 
 
-## Use cases
+## Using
 
-### As a Python module in your Python model
+powerconf consists of a Python module that you can use to load and/or render your configuration files and a standalone command line application.
+
+## Motivation
 
 Let's say you are writing a model in Python to do some sort of physics calculation. 
 The model will discretize some continuous variable along the x-axis to some finite grid.
@@ -109,11 +111,9 @@ There are all sorts of different
 combinations of configuration parameters that might be more convenient for the user.
 
 With powerconf, you move this complexity out of the model and into the configuration file. Admittedly, the burden
-is shifted to the user, but the tradeoff is that they con use any configuration parameters that they want, as long as they
-know how to compute the parameters you model needs. And, if you are the main user of your model, then the ability
+is shifted to the user, but the tradeoff is that they can use any configuration parameters that they want, as long as they
+know how to compute the parameters your model needs. And, if you are the main user of your model, then the ability
 to quickly configure the model with new configuration parameters without having to modify code is huge.
-
-# 
 
 
 
