@@ -62,6 +62,81 @@ def test_batch_expansion_two_nodes():
     assert configs[5]["/grid/x/max"] == 5
 
 
+def test_expand_to_list():
+    config = fspathtree({"N": 10, "xmin": -1, "xmax": 1, "points": "$([1,2,3])"})
+    config_renderer = rendering.ConfigRenderer()
+    config = config_renderer.render(config)
+
+    assert config["N"] == 10
+    assert type(config["points"].tree) is list
+    assert config["points"][0] == 1
+    assert config["points"][1] == 2
+    assert config["points"][2] == 3
+
+    # list comprehension
+    config = fspathtree(
+        {
+            "N": 10,
+            "xmin": -1,
+            "xmax": 1,
+            "dx": "$((${xmax}-${xmin})/(${N}-1) )",
+            "points": "$([ i*${dx} + ${xmin} for i in range(${N})])",
+        }
+    )
+    config_renderer = rendering.ConfigRenderer()
+    config = config_renderer.render(config)
+
+    assert config["N"] == 10
+    assert type(config["points"].tree) is list
+    assert len(config["points"].tree) == 10
+    assert config["points"][0] == -1
+    assert config["points"][1] == pytest.approx(-1 + 2 / 9)
+    assert config["points"][2] == pytest.approx(-1 + 4 / 9)
+    assert config["points"][8] == pytest.approx(1 - 2 / 9)
+    assert config["points"][9] == 1
+
+    # list comprehension with quantities
+    config = fspathtree(
+        {
+            "N": 10,
+            "xmin": "-1 cm",
+            "xmax": "1 cm",
+            "dx": "$((${xmax}-${xmin})/(${N}-1) )",
+            "points": "$([ i*${dx} + ${xmin} for i in range(${N})])",
+        }
+    )
+    config_renderer = rendering.ConfigRenderer()
+    config = config_renderer.render(config)
+
+    assert config["N"] == 10
+    assert type(config["points"].tree) is list
+    assert len(config["points"].tree) == 10
+    assert config["points"][0].to("m").magnitude == pytest.approx(-0.01)
+    assert config["points"][1].to("m").magnitude == pytest.approx(-0.01 + 0.02 / 9)
+    assert config["points"][2].to("m").magnitude == pytest.approx(-0.01 + 0.04 / 9)
+    assert config["points"][8].to("m").magnitude == pytest.approx(0.01 - 0.02 / 9)
+    assert config["points"][9].to("m").magnitude == pytest.approx(0.01)
+
+    # list comprehension with quantities
+    config = fspathtree(
+        {
+            "N": 10,
+            "t0": "200 us",
+            "tau": "50 us",
+            "pulses": "$([ {'arrival_time': i*${t0}, 'duration' : ${tau}} for i in range(${N})])",
+        }
+    )
+    config_renderer = rendering.ConfigRenderer()
+    config = config_renderer.render(config)
+
+    assert config["N"] == 10
+    assert type(config["pulses"].tree) is list
+    assert len(config["pulses"].tree) == 10
+    assert config["pulses/0/arrival_time"] == 0
+    assert config["pulses/1/arrival_time"].magnitude == 200
+    assert config["pulses/2/arrival_time"].magnitude == 400
+
+
 def test_expression_detector():
     assert rendering.contains_expression(1) == False
     assert rendering.contains_expression("x") == False
