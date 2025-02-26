@@ -25,16 +25,13 @@ def test_expression_evaluator():
     dx = evaluator.eval("(c['/grid/x/max'] - c['/grid/x/min']) / (c['/grid/x/N']-1)")
     assert dx.magnitude == 0.05
 
-    evaluator.eval(
-        "numpy.exp( (c['/grid/x/max'] - c['/grid/x/min']) / Q_(10,'cm') )"
-    )
+    evaluator.eval("numpy.exp( (c['/grid/x/max'] - c['/grid/x/min']) / Q_(10,'cm') )")
     assert dx.magnitude == 0.05
 
     evaluator.stop()
 
 
 def test_expression_exceptions():
-
     with pytest.raises(expressions.ExpressionError) as e:
         raise expressions.ExpressionError("There was a problem.")
 

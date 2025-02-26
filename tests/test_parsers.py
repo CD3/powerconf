@@ -48,7 +48,6 @@ def test_expressions():
 
 
 def test_expressions_with_filters():
-
     result = parsing.expression.parse_string("$( $x + $y | to('cm') )")
     assert result["expression body"] == "( $x + $y | to('cm') )"
 

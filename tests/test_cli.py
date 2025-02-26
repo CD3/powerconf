@@ -74,7 +74,6 @@ powerconf-run:
 
         assert result.exit_code == 0
 
-
         assert P("OUTPUT-1.txt").exists()
         assert P("OUTPUT-2.txt").exists()
         assert P("LOG-1.txt").exists()
@@ -162,7 +161,6 @@ output = output-1.txt
 
 
 def test_run_command_timing(tmp_path):
-
     with working_directory(tmp_path):
         config_text = """
 powerconf-run:

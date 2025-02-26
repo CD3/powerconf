@@ -454,9 +454,7 @@ def test_rendering_complex_dependencies():
 
 
 def test_include_branches_yaml(tmp_path):
-
     with unit_test_utils.working_directory(tmp_path):
-
         text1 = """
     simulation:
         grid:
@@ -493,9 +491,7 @@ def test_include_branches_yaml(tmp_path):
 
 
 def test_multi_level_include_branches_yaml(tmp_path):
-
     with unit_test_utils.working_directory(tmp_path):
-
         text1 = """
     simulation:
         grid:

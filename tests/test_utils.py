@@ -7,7 +7,6 @@ Q_ = pint.UnitRegistry().Quantity
 
 
 def test_config_id():
-
     config1 = fspathtree({"one": 1})
     config2 = fspathtree({"one": 1, "two": 2})
     config3 = fspathtree({"one": 1})
@@ -24,7 +23,6 @@ def test_config_id():
 
 
 def test_config_id_with_quantities():
-
     config1 = fspathtree({"one": Q_(1, "cm")})
     config2 = fspathtree({"one": Q_(1, "cm"), "two": Q_(2, " cm")})
     config3 = fspathtree({"one": Q_(1, " cm")})
@@ -41,7 +39,6 @@ def test_config_id_with_quantities():
 
 
 def test_transforming_quantities_to_strings():
-
     config = fspathtree({"x": Q_(1, "cm"), "N": 1})
     config = utils.apply_transform(
         config, lambda p, n: str(n) if type(n) is Q_ else config[p]
@@ -52,7 +49,6 @@ def test_transforming_quantities_to_strings():
 
 
 def test_transforming_quantities_to_strings_with_predicate():
-
     config = fspathtree({"x": Q_(1, "cm"), "N": 1})
     config = utils.apply_transform(
         config, lambda p, n: str(n), predicate=lambda p, n: hasattr(n, "magnitude")
@@ -63,7 +59,6 @@ def test_transforming_quantities_to_strings_with_predicate():
 
 
 def test_apply_transform_to_list_of_configs():
-
     configs = []
     configs.append(fspathtree({"x": Q_(1, "cm"), "N": 1}))
     configs.append(fspathtree({"x": Q_(1, "cm"), "N": 1}))

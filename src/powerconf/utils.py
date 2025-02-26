@@ -21,6 +21,7 @@ def get_id(
     that are expected to change, but don't chnge the actual configuration.
     """
     if path_predicate is None:
+
         def path_predicate(p):
             return True
 

@@ -97,7 +97,6 @@ def print_instances(config_file: Path):
 
 def run_config(config, tool):
     with console.capture() as capture:
-
         tool_config = config[f"/powerconf-run/{tool}"]
 
         template_config_file = tool_config.get("template_config_file", None)
@@ -152,7 +151,6 @@ def run(
         ),
     ],
 ):
-
     configs = yaml.powerload(config_file)
     # check that all configs have a section for the given tool.
     for i, config in enumerate(configs):
