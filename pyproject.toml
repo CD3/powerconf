@@ -12,7 +12,7 @@ dependencies = [
     "pyyaml>=6.0.2",
 ]
 readme = "README.md"
-requires-python = ">= 3.8"
+requires-python = ">= 3.10"
 
 [project.scripts]
 "powerconf" = "powerconf.cli:app"
@@ -21,7 +21,7 @@ requires-python = ">= 3.8"
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
-[tool.rye]
+[tool.uv]
 managed = true
 dev-dependencies = [
     "pytest>=8.3.3",
