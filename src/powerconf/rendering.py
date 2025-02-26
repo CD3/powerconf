@@ -228,8 +228,8 @@ class ConfigRenderer:
         self, config: fspathtree, graph: graphs.DependencyGraph
     ):
         """Evaluate the expressions in a configuration tree, using a graph of the tree dependencies to determine the render order."""
-        # We need to determine which the to evaluate evaluate the nodes of the config gree.
-        # We have a graph that describes the dependencies. each node is the graph is a leaf node
+        # We need to determine the order to evaluate the nodes of the config tree.
+        # We have a graph that describes the dependencies. Each node is the graph is a leaf node
         # in the tree, and the edges represent dependencies between nodes.
         # Consider an example,
         #
