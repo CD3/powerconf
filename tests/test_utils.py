@@ -44,7 +44,7 @@ def test_transforming_quantities_to_strings():
 
     config = fspathtree({"x": Q_(1, "cm"), "N": 1})
     config = utils.apply_transform(
-        config, lambda p, n: str(n) if type(n) == Q_ else config[p]
+        config, lambda p, n: str(n) if type(n) is Q_ else config[p]
     )
 
     assert config["x"] == "1 centimeter"

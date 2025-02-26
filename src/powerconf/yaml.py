@@ -2,7 +2,6 @@ import pathlib
 from typing import List
 
 from fspathtree import fspathtree
-from yaml import *
 
 from . import loaders, rendering
 

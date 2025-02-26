@@ -1,5 +1,4 @@
 import pint
-import pyparsing
 import pytest
 from fspathtree import fspathtree
 
@@ -26,7 +25,7 @@ def test_expression_evaluator():
     dx = evaluator.eval("(c['/grid/x/max'] - c['/grid/x/min']) / (c['/grid/x/N']-1)")
     assert dx.magnitude == 0.05
 
-    f = evaluator.eval(
+    evaluator.eval(
         "numpy.exp( (c['/grid/x/max'] - c['/grid/x/min']) / Q_(10,'cm') )"
     )
     assert dx.magnitude == 0.05

@@ -14,10 +14,10 @@ def test_variable():
     result = parsing.variable.parse_string("$x_q")
     assert result["variable name"] == "x_q"
 
-    with pytest.raises(pyparsing.exceptions.ParseException) as e:
+    with pytest.raises(pyparsing.exceptions.ParseException):
         parsing.variable.parse_string("x$x")
 
-    with pytest.raises(pyparsing.exceptions.ParseException) as e:
+    with pytest.raises(pyparsing.exceptions.ParseException):
         parsing.variable.parse_string("$ x")
 
     result = parsing.variable.parse_string("${x}")
@@ -27,7 +27,7 @@ def test_variable():
     result = parsing.variable.parse_string("${/grid/x/min val}")
     assert result["variable name"] == "/grid/x/min val"
 
-    with pytest.raises(pyparsing.exceptions.ParseException) as e:
+    with pytest.raises(pyparsing.exceptions.ParseException):
         parsing.variable.parse_string("$ {x}")
 
 
@@ -35,7 +35,7 @@ def test_expressions():
     result = parsing.expression.parse_string("$(1 + 1)")
     assert result["expression body"] == "(1 + 1)"
 
-    with pytest.raises(pyparsing.exceptions.ParseException) as e:
+    with pytest.raises(pyparsing.exceptions.ParseException):
         result = parsing.expression.parse_string("$ (1 + 1)")
 
     result = parsing.expression.parse_string("$( $x + $y)")

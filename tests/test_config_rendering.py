@@ -1,12 +1,11 @@
 import pathlib
 
 import pint
-import pyparsing
 import pytest
 import yaml
 from fspathtree import fspathtree
 
-from powerconf import expressions, loaders, parsing, rendering, units, utils
+from powerconf import expressions, loaders, rendering, units, utils
 
 from . import unit_test_utils
 
@@ -138,12 +137,12 @@ def test_expand_to_list():
 
 
 def test_expression_detector():
-    assert rendering.contains_expression(1) == False
-    assert rendering.contains_expression("x") == False
-    assert rendering.contains_expression("${x}") == False
-    assert rendering.contains_expression("$(1 + 1)") == True
-    assert rendering.contains_expression("_$(1 + 1)-var") == True
-    assert rendering.contains_expression("_$(1 + 1)-to-$(2+2)") == True
+    assert not rendering.contains_expression(1)
+    assert not rendering.contains_expression("x")
+    assert not rendering.contains_expression("${x}")
+    assert rendering.contains_expression("$(1 + 1)")
+    assert rendering.contains_expression("_$(1 + 1)-var")
+    assert rendering.contains_expression("_$(1 + 1)-to-$(2+2)")
 
 
 def test_evaluate_expression():

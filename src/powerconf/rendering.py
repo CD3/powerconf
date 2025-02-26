@@ -2,9 +2,8 @@ import copy
 import itertools
 from os.path import normpath
 from pathlib import Path
-from typing import Any, Callable, Dict, List
+from typing import Any, Callable, List
 
-import pint
 import pystache
 from fspathtree import fspathtree
 
@@ -64,11 +63,11 @@ def try_construct_quantity(
                 return False
             try:
                 float(obj.strip().split(" ")[0])
-            except:
+            except Exception:
                 return False
             try:
                 quantity_class(obj.strip())
-            except:
+            except Exception:
                 return False
 
             return True
@@ -310,7 +309,6 @@ class ConfigRenderer:
             all_chains = []
             for a in graphs.nx.ancestors(graph, root):
                 all_chains += graphs.nx.all_simple_paths(graph, a, root)
-            nodes_to_evaluate = []
 
         # get all paths in the graph that end on roots
         all_chains = []
@@ -388,7 +386,7 @@ class ConfigRenderer:
         Expand all shell-style variables into python variables in the entire tree.
         """
         for path in config.get_all_leaf_node_paths():
-            if type(config[path]) == str:
+            if type(config[path]) is str:
                 config[path] = expand_variables(config[path])
 
         return config
@@ -421,7 +419,7 @@ def render_mustache_template(template_text: str, ctx: fspathtree):
             set(
                 map(
                     lambda item: item.key,
-                    filter(lambda item: type(item) != str, parse_tree._parse_tree),
+                    filter(lambda item: type(item) is not str, parse_tree._parse_tree),
                 )
             ),
         )

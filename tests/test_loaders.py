@@ -10,7 +10,7 @@ from . import unit_test_utils
 def test_yaml_loader(tmp_path):
     text = """one: 1"""
     config = loaders.yaml(text)
-    assert type(config) == fspathtree.fspathtree
+    assert type(config) is fspathtree.fspathtree
     assert "one" in config
     assert config["one"] == 1
 
@@ -21,7 +21,7 @@ def test_yaml_loader(tmp_path):
         """
         pathlib.Path("CONFIG.yml").write_text(text)
         config = loaders.yaml(pathlib.Path("CONFIG.yml"))
-        assert type(config) == fspathtree.fspathtree
+        assert type(config) is fspathtree.fspathtree
         assert "one" in config
         assert "two" in config
         assert config["one"] == 1

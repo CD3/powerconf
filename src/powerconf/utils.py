@@ -1,9 +1,9 @@
 import contextlib
 import hashlib
 import json
+import os
 import pathlib
 import typing
-import os
 
 from fspathtree import fspathtree
 
@@ -21,7 +21,9 @@ def get_id(
     that are expected to change, but don't chnge the actual configuration.
     """
     if path_predicate is None:
-        path_predicate = lambda p: True
+        def path_predicate(p):
+            return True
+
     # make a copy of the config with only keys not in the strip list
     c = fspathtree()
     for p in config.get_all_leaf_node_paths(predicate=path_predicate):
@@ -48,7 +50,7 @@ def apply_transform(
                       have the transform apply. by default, all nodes have transform applied.
     """
 
-    if type(config) == list:
+    if type(config) is list:
         for i in range(len(config)):
             config[i] = apply_transform(config[i], transform, predicate)
     else:

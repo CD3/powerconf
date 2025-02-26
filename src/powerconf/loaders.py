@@ -10,7 +10,7 @@ def yaml(text_or_file: str | pathlib.Path):
     """
     Load a configuration tree from a string or file.
     """
-    if type(text_or_file) == str:
+    if type(text_or_file) is str:
         text = text_or_file
     else:
         text = text_or_file.read_text()
@@ -22,7 +22,7 @@ def yaml(text_or_file: str | pathlib.Path):
 
 def yaml_all_docs(text_or_file: pathlib.Path | str):
     """Load all documents in YAML file."""
-    if type(text_or_file) == str:
+    if type(text_or_file) is str:
         text = text_or_file
     else:
         text = text_or_file.read_text()

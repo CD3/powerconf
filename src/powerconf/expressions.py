@@ -1,9 +1,5 @@
 import pathlib
-import pickle
-import subprocess
 import sys
-
-from fspathtree import fspathtree
 
 
 class ExpressionError(Exception):
@@ -42,7 +38,7 @@ class ExecExpressionEvaluator(ExpressionEvaluator):
             import numpy
 
             self.add_global("numpy", numpy)
-        except:
+        except Exception:
             pass
 
         extension_file = pathlib.Path("powerconf_extensions.py")

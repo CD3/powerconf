@@ -1,20 +1,15 @@
-import copy
 import importlib
 import multiprocessing
-import os
 import pathlib
 import subprocess
-import sys
 from pathlib import Path
-from typing import Annotated, List
+from typing import Annotated
 
 import rich
 import typer
 from fspathtree import fspathtree
 
-import powerconf
-
-from . import loaders, rendering, utils, yaml
+from . import rendering, utils, yaml
 
 app = typer.Typer()
 
@@ -139,10 +134,10 @@ def run_config(config, tool):
                     )
                     console.print(f"Command '{cmd}' Finished")
                     console.print(f"Return Code: {result.returncode}")
-                    console.print(f"Output")
-                    console.print(f"vvvvvvvvvvvvvvvvvvvvvvvv")
+                    console.print("Output")
+                    console.print("vvvvvvvvvvvvvvvvvvvvvvvv")
                     console.print(result.stdout.decode())
-                    console.print(f"^^^^^^^^^^^^^^^^^^^^^^^^")
+                    console.print("^^^^^^^^^^^^^^^^^^^^^^^^")
                     console.print()
     return capture.get()
 

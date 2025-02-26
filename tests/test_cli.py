@@ -1,12 +1,11 @@
 import time
 from pathlib import Path as P
 
-import pytest
 from typer.testing import CliRunner
 
 from powerconf.cli import app
 
-from .unit_test_utils import *
+from .unit_test_utils import working_directory
 
 runner = CliRunner(mix_stderr=False)
 
@@ -75,7 +74,6 @@ powerconf-run:
 
         assert result.exit_code == 0
 
-        print(">>>>>>", result.stdout)
 
         assert P("OUTPUT-1.txt").exists()
         assert P("OUTPUT-2.txt").exists()
@@ -213,6 +211,7 @@ powerconf-run:
 
         start = time.perf_counter()
         result = runner.invoke(app, ["run", "acme", "CONFIG.yml"])
+        assert result.exit_code == 0
         end = time.perf_counter()
         duration = end - start
         # we are running each config in parallel (using multiprocessing)

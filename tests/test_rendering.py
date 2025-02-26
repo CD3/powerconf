@@ -1,7 +1,5 @@
 import pint
-import pyparsing
 import pytest
-import yaml
 from fspathtree import fspathtree
 
 from powerconf import rendering
@@ -28,13 +26,13 @@ def test_quantity_construction():
     x = rendering.try_construct_quantity("quad", is_quantity=lambda s: True)
     assert x.magnitude == pytest.approx(1)
 
-    with pytest.raises(Exception) as e:
+    with pytest.raises(Exception):
         x = rendering.try_construct_quantity("lskjdf", is_quantity=lambda s: True)
 
     x = rendering.try_construct_quantity(" 4.5 cm")
-    assert type(x) != Q_
+    assert type(x) is not Q_
     x = rendering.try_construct_quantity(" 4.5 cm", quantity_class=Q_)
-    assert type(x) == Q_
+    assert type(x) is Q_
 
 
 def test_mustache_template_rendering():
