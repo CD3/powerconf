@@ -31,7 +31,9 @@ powerconf-run:
     template_config_file: ACME-solver.ini.template
     rendered_config_file: config_files/ACME-solver-$(str(${/simulation/grid/res}).replace(" ","_")).ini
     working_directory: acme-workspace
+    shell: /bin/bash
     command:
+      - set -e
       - working_directory: output
         command: python ../../acme ../$(${../../rendered_config_file}) > acme.stdout
       - echo "DONE"

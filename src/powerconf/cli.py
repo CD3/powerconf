@@ -1,6 +1,8 @@
 import importlib
+import stat
 import multiprocessing
 import pathlib
+import os
 import subprocess
 from pathlib import Path
 from typing import Annotated
@@ -95,8 +97,20 @@ def print_instances(config_file: Path):
     console.print("\n---\n".join(map(lambda c: yaml.dump(c.tree), configs)))
 
 
-def run_config(config, tool):
+def run_job(script):
     with console.capture() as capture:
+        console.print(f"Running: {script.absolute()}")
+        result = subprocess.run( [script.absolute()], stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
+        console.print("Finished")
+        console.print(f"Return Code: {result.returncode}")
+        console.print("Output")
+        console.print("vvvvvvvvvvvvvvvvvvvvvvvv")
+        console.print(result.stdout.decode())
+        console.print("^^^^^^^^^^^^^^^^^^^^^^^^")
+        console.print()
+    return capture.get()
+
+def setup_config_run(config, tool):
         tool_config = config[f"/powerconf-run/{tool}"]
 
         template_config_file = tool_config.get("template_config_file", None)
@@ -107,8 +121,10 @@ def run_config(config, tool):
         if rendered_config_file is not None:
             rendered_config_file = Path(rendered_config_file)
 
+        start_directory = Path().absolute()
         working_directory = Path(tool_config.get("working_directory", ".")).absolute()
         with utils.working_directory(working_directory):
+
             if template_config_file is not None:
                 if not rendered_config_file.parent.exists():
                     rendered_config_file.parent.mkdir(exist_ok=True, parents=True)
@@ -116,29 +132,35 @@ def run_config(config, tool):
                     template_config_file, config, rendered_config_file
                 )
 
+            if rendered_config_file is not None:
+                tag = rendered_config_file.stem
+            else:
+                tag = utils.get_id(config)
+            script_file = Path(f"RUN-{tool}-{tag}.sh")
+            script_lines = []
+            shell = tool_config.get("shell", os.environ.get("SHELL", '/bin/sh'))
+            script_lines.append(f"#! {shell}")
+            script_lines.append(f"cd {working_directory.absolute()}")
+            cwd = working_directory
             for command in tool_config["command"]:
                 wd = working_directory
                 cmd = command
                 if hasattr(command, "tree"):
                     cmd = command["command"]
                     wd = Path(command.get("working_directory", ".")).absolute()
-                with utils.working_directory(wd):
-                    console.print(f"Running Command: {cmd}")
-                    console.print(f"Working Directory: {wd}")
-                    result = subprocess.run(
-                        cmd,
-                        shell=True,
-                        stderr=subprocess.STDOUT,
-                        stdout=subprocess.PIPE,
-                    )
-                    console.print(f"Command '{cmd}' Finished")
-                    console.print(f"Return Code: {result.returncode}")
-                    console.print("Output")
-                    console.print("vvvvvvvvvvvvvvvvvvvvvvvv")
-                    console.print(result.stdout.decode())
-                    console.print("^^^^^^^^^^^^^^^^^^^^^^^^")
-                    console.print()
-    return capture.get()
+
+                if wd != cwd:
+                    script_lines.append(f"mkdir -p {wd}")
+                    script_lines.append(f"cd {wd}")
+                    cwd = wd
+                script_lines.append(cmd)
+
+            script_file.write_text("\n".join(script_lines))
+            # make executable
+            os.chmod(script_file, os.stat(script_file).st_mode | stat.S_IEXEC)
+
+        return (working_directory/script_file).relative_to(start_directory)
+
 
 
 @app.command()
@@ -150,6 +172,10 @@ def run(
             help="Confuration file. Includes model configuration and configuration for `powerconf run`."
         ),
     ],
+    dry_run: Annotated[
+        bool,
+        typer.Option("--dry-run","-n", help="Don't run jobs, just set them up."),
+    ] = False,
 ):
     configs = yaml.powerload(config_file)
     # check that all configs have a section for the given tool.
@@ -177,9 +203,24 @@ def run(
             )
             raise typer.Exit(code=2)
 
-    console.print("Running job for each config in parallel.")
-    console.print("Output from commands will be printed as they finish.")
+    console.print("Setting up jobs...")
+    run_scripts = []
+    for config in configs:
+        run_script = setup_config_run(config, tool)
+        run_scripts.append(run_script)
+
+    console.print("Job scripts written to:")
+    for script in run_scripts:
+        console.print("  ",script)
+    console.print()
+    console.print()
+
+    if dry_run:
+        raise typer.Exit(code=0)
+
+    console.print("Running job scripts in parallel")
     with multiprocessing.Pool() as pool:
-        for output in pool.starmap(run_config, [(config, tool) for config in configs]):
-            print(output)
-            print()
+        for output in pool.map(run_job, run_scripts):
+            print(output) # already formatted by rich
+            console.print()
+
