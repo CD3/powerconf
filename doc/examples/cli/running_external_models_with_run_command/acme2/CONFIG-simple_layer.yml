@@ -1,0 +1,46 @@
+simulation:
+  grid:
+    x:
+      min: 0 um
+      max: 100 um
+      n: $(int(${max}/${../res}) + 1)
+    y:
+      min: 0 um
+      max: 1 cm
+      n: $(int(${max}/${../res}) + 1)
+
+# parameters that will be inserted diredctly into ACME config file.
+# these parameters _MUST_ be given.
+# all quantities need to be converted to ACME internal units (cgs)
+# and turned into plain numbers.
+acme:
+    simulation:
+      output_file: acme-ouput-$(${../grid/x/n}).txt
+    grid:
+      x:
+        n: $($/simulation/grid/x/n)
+        min: $($/simulation/grid/x/min.to('cm').magnitude)
+        max: $($/simulation/grid/x/max.to('cm').magnitude)
+      y:
+        n: $($/simulation/grid/y/n)
+        min: $($/simulation/grid/y/min.to('cm').magnitude)
+        max: $($/simulation/grid/y/max.to('cm').magnitude)
+
+powerconf-run:
+  acme:
+    tag: $(str(${/simulation/grid/res}).replace(" ","_"))
+    template_config_file: ACME-solver.ini.template
+    rendered_config_file: config_files/ACME-solver-$(${tag}).ini
+    working_directory: acme-workspace
+    command:
+      - echo "cd output" > RUN_SCRIPT.$(${../tag}).sh
+      - echo "python ../../acme ../$(${../rendered_config_file})" >> RUN_SCRIPT.$(${../tag}).sh
+      - echo "echo DONE" >> RUN_SCRIPT.$(${../tag}).sh
+---
+simulation:
+  grid:
+    res: 1 um
+---
+simulation:
+  grid:
+    res: 2 um
