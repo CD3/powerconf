@@ -11,3 +11,5 @@ wheels/
 .python-version
 requirements-dev.lock
 requirements.lock
+doc/examples/cli/running_external_models_with_run_command/acme2/acme-workspace/output
+doc/examples/cli/running_external_models_with_run_command/acme/acme-workspace/output
