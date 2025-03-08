@@ -1,5 +1,6 @@
 simulation:
   grid:
+    res: 1 um
     x:
       min: 0 um
       max: 100 um
@@ -25,11 +26,3 @@ acme:
         n: $($/simulation/grid/y/n)
         min: $($/simulation/grid/y/min.to('cm').magnitude)
         max: $($/simulation/grid/y/max.to('cm').magnitude)
----
-simulation:
-  grid:
-    res: 1 um
----
-simulation:
-  grid:
-    res: 2 um

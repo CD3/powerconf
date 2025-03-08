@@ -1,0 +1,176 @@
+<p>The <code>render</code> command is used to interop with third-party
+tools that do not use a supported config file format.</p>
+<p>Consider a fictional tool named <code>acme</code>. This tool reads
+configuration files in Pythons <code>configparser</code> format (similar
+to ini).</p>
+<p><strong>acem</strong></p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sys</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> configparser</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pathlib</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>config_file <span class="op">=</span> pathlib.Path(sys.argv[<span class="dv">1</span>])</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f&quot;Running simulation described in </span><span class="sc">{</span>config_file<span class="sc">}</span><span class="ss">.&quot;</span>)</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>config <span class="op">=</span> configparser.ConfigParser()</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>config.read(config_file)</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f&quot;Writing results to </span><span class="sc">{</span>config[<span class="st">&#39;simulation&#39;</span>][<span class="st">&#39;output_file&#39;</span>]<span class="sc">}</span><span class="ss">&quot;</span>)</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>pathlib.Path(config[<span class="st">&#39;simulation&#39;</span>][<span class="st">&#39;output_file&#39;</span>]).write_text(<span class="st">&quot;done&quot;</span>)</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">&quot;Done&quot;</span>)</span></code></pre></div>
+<p>A typical configuration file looks something like this:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode ini"><code class="sourceCode ini"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">[simulation]</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="dt">output_file </span><span class="ot">=</span><span class="st"> acme-ouput.txt</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="kw">[grid.x]</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="dt">min </span><span class="ot">=</span><span class="st"> </span><span class="fl">0.0</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="dt">max </span><span class="ot">=</span><span class="st"> </span><span class="fl">0.01</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="dt">N </span><span class="ot">=</span><span class="st"> </span><span class="dv">101</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="kw">[grid.y]</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="dt">min </span><span class="ot">=</span><span class="st"> </span><span class="fl">0.0</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="dt">max </span><span class="ot">=</span><span class="st"> </span><span class="dv">1</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="dt">N </span><span class="ot">=</span><span class="st"> </span><span class="dv">10001</span></span></code></pre></div>
+<p>and we run it like this</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> python acme ACME-solver.ini</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="ex">Running</span> simulation described in ACME-solver.ini.</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="ex">Writing</span> results to acme-ouput.txt</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="ex">Done</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> ls</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="ex">acme</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="ex">acme-ouput.txt</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="ex">ACME-solver.ini</span></span></code></pre></div>
+<p>We would like to powerup our <code>acme</code> config file to add
+unit suport. We start by writing a powerconf configuration file. We are
+free to structure the configuration however we want, config parameters
+can be given as quantities with units, and we can use expressions that
+calculate the value of some paraemters based on the value of others.</p>
+<p><strong>POWERCONFIG.yml</strong></p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">simulation</span><span class="kw">:</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">grid</span><span class="kw">:</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">res</span><span class="kw">:</span><span class="at"> 1 um</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">x</span><span class="kw">:</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">min</span><span class="kw">:</span><span class="at"> 0 um</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">max</span><span class="kw">:</span><span class="at"> 100 um</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">n</span><span class="kw">:</span><span class="at"> $(int(${max}/${../res}) + 1)</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">y</span><span class="kw">:</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">min</span><span class="kw">:</span><span class="at"> 0 um</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">max</span><span class="kw">:</span><span class="at"> 1 cm</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">n</span><span class="kw">:</span><span class="at"> $(int(${max}/${../res}) + 1)</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a></span></code></pre></div>
+<p>We can test that this configuration works with the
+<code>print-instances</code> command:</p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> powerconf print-instances</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="ex">simulation:</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="ex">grid:</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    <span class="ex">res:</span> 1 micrometer</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    <span class="ex">x:</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>      <span class="ex">max:</span> 100 micrometer</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>      <span class="ex">min:</span> 0 micrometer</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>      <span class="ex">n:</span> 101</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>    <span class="ex">y:</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>      <span class="ex">max:</span> 1 centimeter</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>      <span class="ex">min:</span> 0 micrometer</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>      <span class="ex">n:</span> 10001</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a></span></code></pre></div>
+<p>Next, we add a section to our configuration file for the acme tool.
+We add a parameter for every value we want to inject into our acme
+config, and we compute the value that will be injected using
+expressions. The purpose of this section is to unit convert all
+parameters to the unit expected by the acme tool and strip the
+units.</p>
+<p><strong>POWERCONFIG.yml</strong></p>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">simulation</span><span class="kw">:</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">grid</span><span class="kw">:</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">res</span><span class="kw">:</span><span class="at"> 1 um</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">x</span><span class="kw">:</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">min</span><span class="kw">:</span><span class="at"> 0 um</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">max</span><span class="kw">:</span><span class="at"> 100 um</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">n</span><span class="kw">:</span><span class="at"> $(int(${max}/${../res}) + 1)</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">y</span><span class="kw">:</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">min</span><span class="kw">:</span><span class="at"> 0 um</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">max</span><span class="kw">:</span><span class="at"> 1 cm</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">n</span><span class="kw">:</span><span class="at"> $(int(${max}/${../res}) + 1)</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a><span class="co"># parameters that will be inserted diredctly into ACME config file.</span></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a><span class="co"># these parameters _MUST_ be given.</span></span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a><span class="co"># all quantities need to be converted to ACME internal units (cgs)</span></span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a><span class="co"># and turned into plain numbers.</span></span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a><span class="fu">acme</span><span class="kw">:</span></span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">simulation</span><span class="kw">:</span></span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">output_file</span><span class="kw">:</span><span class="at"> acme-ouput-$(${../grid/x/n}).txt</span></span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">grid</span><span class="kw">:</span></span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">x</span><span class="kw">:</span></span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">n</span><span class="kw">:</span><span class="at"> $($/simulation/grid/x/n)</span></span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">min</span><span class="kw">:</span><span class="at"> $($/simulation/grid/x/min.to(&#39;cm&#39;).magnitude)</span></span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">max</span><span class="kw">:</span><span class="at"> $($/simulation/grid/x/max.to(&#39;cm&#39;).magnitude)</span></span>
+<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">y</span><span class="kw">:</span></span>
+<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">n</span><span class="kw">:</span><span class="at"> $($/simulation/grid/y/n)</span></span>
+<span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">min</span><span class="kw">:</span><span class="at"> $($/simulation/grid/y/min.to(&#39;cm&#39;).magnitude)</span></span>
+<span id="cb6-28"><a href="#cb6-28" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">max</span><span class="kw">:</span><span class="at"> $($/simulation/grid/y/max.to(&#39;cm&#39;).magnitude)</span></span></code></pre></div>
+<p>Nex, we write an acme configuration <em>template</em>. The template
+is a mustache template, <code>powerconf render</code> will render this
+file using mustache with the powerconf configuration instance as a
+context. To inject the parameters, we just reference the keys under the
+“acem” node.</p>
+<p><strong>ACME-solver.ini.template</strong></p>
+<div class="sourceCode" id="cb7"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">[</span><span class="at">simulation</span><span class="kw">]</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="at">output_file = {{acme/simulation/output_file}}</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="kw">[</span><span class="at">grid.x</span><span class="kw">]</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="at">min = {{acme/grid/x/min}}</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="at">max = {{acme/grid/x/max}}</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="at">N = {{acme/grid/x/n}}</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a><span class="kw">[</span><span class="at">grid.</span><span class="ch">y</span><span class="kw">]</span></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a><span class="at">min = {{acme/grid/y/min}}</span></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a><span class="at">max = {{acme/grid/y/max}}</span></span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a><span class="at">N = {{acme/grid/y/n}}</span></span></code></pre></div>
+<p>And finally, we can render an ACME configuration file</p>
+<div class="sourceCode" id="cb8"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> powerconf render POWERCONFIG.yml ACME-solver.ini.template ACME-solver.ini.rendered</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> ls</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="ex">acme</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="ex">acme-ouput-101.txt</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="ex">acme-ouput.txt</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a><span class="ex">ACME-solver.ini</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a><span class="ex">ACME-solver.ini.rendered</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a><span class="ex">ACME-solver.ini.template</span></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a><span class="ex">POWERCONFIG.yml</span></span></code></pre></div>
+<p>The contents of <code>ACME-solver.ini.rendered</code> will be</p>
+<div class="sourceCode" id="cb9"><pre
+class="sourceCode ini"><code class="sourceCode ini"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">[simulation]</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="dt">output_file </span><span class="ot">=</span><span class="st"> {{acme/simulation/output_file}}</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="kw">[grid.x]</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="dt">min </span><span class="ot">=</span><span class="st"> {{acme/grid/x/min}}</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="dt">max </span><span class="ot">=</span><span class="st"> {{acme/grid/x/max}}</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a><span class="dt">N </span><span class="ot">=</span><span class="st"> {{acme/grid/x/n}}</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a><span class="kw">[grid.y]</span></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a><span class="dt">min </span><span class="ot">=</span><span class="st"> {{acme/grid/y/min}}</span></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a><span class="dt">max </span><span class="ot">=</span><span class="st"> {{acme/grid/y/max}}</span></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a><span class="dt">N </span><span class="ot">=</span><span class="st"> {{acme/grid/y/n}}</span></span></code></pre></div>
+<p>Running <code>acme</code>…</p>
+<div class="sourceCode" id="cb10"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> python acme ACME-solver.ini.rendered</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="ex">Running</span> simulation described in ACME-solver.ini.rendered.</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="ex">Writing</span> results to acme-ouput-101.txt</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="ex">Done</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> ls</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="ex">acme</span></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a><span class="ex">acme-ouput-101.txt</span></span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a><span class="ex">acme-ouput.txt</span></span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a><span class="ex">ACME-solver.ini</span></span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a><span class="ex">ACME-solver.ini.rendered</span></span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a><span class="ex">ACME-solver.ini.template</span></span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a><span class="ex">POWERCONFIG.yml</span></span></code></pre></div>

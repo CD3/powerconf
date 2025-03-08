@@ -1,0 +1,5 @@
+make-readme:
+  compudoc README.md.cd --comment-line-pattern '<!--{{{{CODE}}-->'
+acme:
+  uv run powerconf render CONFIG-simple_layer.yml ACME-solver.ini.template ACME-solver-workspace/configs.d
+  cd ACME-solver-workspace && qrun -C 'python ../acme' -d ' ' configs.d/*

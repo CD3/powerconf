@@ -5,8 +5,11 @@ import pathlib
 
 config_file = pathlib.Path(sys.argv[1])
 
+print(f"Running simulation described in {config_file}.")
 config = configparser.ConfigParser()
-
 config.read(config_file)
 
+print(f"Writing results to {config['simulation']['output_file']}")
 pathlib.Path(config['simulation']['output_file']).write_text("done")
+
+print("Done")
