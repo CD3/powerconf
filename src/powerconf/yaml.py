@@ -4,6 +4,8 @@ from typing import List
 from fspathtree import fspathtree
 
 from . import loaders, rendering
+from .pyyaml import dump, safe_load
+
 
 
 def powerload(config_file: pathlib.Path) -> List[fspathtree]:

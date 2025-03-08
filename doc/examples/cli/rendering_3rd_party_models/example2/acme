@@ -1,0 +1,12 @@
+import sys
+import configparser
+import pathlib
+
+
+config_file = pathlib.Path(sys.argv[1])
+
+config = configparser.ConfigParser()
+
+config.read(config_file)
+
+pathlib.Path(config['simulation']['output_file']).write_text("done")

@@ -1,0 +1,4 @@
+powerconf-run:
+    acme:
+        command:
+            - echo "HI FROM TOOL"

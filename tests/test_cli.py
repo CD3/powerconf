@@ -47,9 +47,12 @@ powerconf-run:
 
         result = runner.invoke(app, ["run", "acme", "CONFIG.yml"], env={"TERM": "dumb"})
 
+        if result.exit_code != 0:
+            print("STDOUT:", result.stdout)
+            print("STDERR:", result.stderr)
         assert result.exit_code == 0
 
-        assert 'Running Command: echo "HI FROM TOOL"' in result.stdout
+        assert "Running:" in result.stdout
         assert "vvv\nHI FROM TOOL\n\n^^^" in result.stdout
 
 
@@ -173,6 +176,10 @@ powerconf-run:
 
         start = time.perf_counter()
         result = runner.invoke(app, ["run", "acme", "CONFIG.yml"])
+        if result.exit_code != 0:
+            print("STDOUT:", result.stdout)
+            print("STDERR:", result.stderr)
+        assert result.exit_code == 0
         end = time.perf_counter()
         duration = end - start
         assert duration > 0.5

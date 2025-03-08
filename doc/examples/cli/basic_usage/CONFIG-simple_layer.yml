@@ -1,0 +1,35 @@
+simulation:
+  grid:
+    x:
+      min: 0 um
+      max: 100 um
+      n: $(int(${max}/${../res}) + 1)
+    y:
+      min: 0 um
+      max: 1 cm
+      n: $(int(${max}/${../res}) + 1)
+
+# parameters that will be inserted diredctly into ACME config file.
+# these parameters _MUST_ be given.
+# all quantities need to be converted to ACME internal units (cgs)
+# and turned into plain numbers.
+acme:
+    simulation:
+      output_file: acme-ouput-$(${../grid/x/n}).txt
+    grid:
+      x:
+        n: $($/simulation/grid/x/n)
+        min: $($/simulation/grid/x/min.to('cm').magnitude)
+        max: $($/simulation/grid/x/max.to('cm').magnitude)
+      y:
+        n: $($/simulation/grid/y/n)
+        min: $($/simulation/grid/y/min.to('cm').magnitude)
+        max: $($/simulation/grid/y/max.to('cm').magnitude)
+---
+simulation:
+  grid:
+    res: 1 um
+---
+simulation:
+  grid:
+    res: 2 um
