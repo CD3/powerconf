@@ -7,7 +7,7 @@ Consider a fictional tool named `acme`. This tool reads configuration files in P
 <!-- code = P('acme').read_text()           -->
 <!-- }}}      -->
 
-**acem**
+**acme**
 ```python
 {{code}}
 ```
@@ -72,7 +72,7 @@ strip the units.
 ```
 Nex, we write an acme configuration _template_. The template is a mustache template, `powerconf render`
 will render this file using mustache with the powerconf configuration instance as a context. To inject
-the parameters, we just reference the keys under the "acem" node.
+the parameters, we just reference the keys under the "acme" node.
 <!-- {{{      -->
 <!-- code = P('ACME-solver.ini.template').read_text()                         -->
 <!-- }}}      -->

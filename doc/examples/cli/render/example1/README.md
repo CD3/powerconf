@@ -3,7 +3,7 @@ The `render` command is used to interop with third-party tools that do not use a
 Consider a fictional tool named `acme`. This tool reads configuration files in Pythons `configparser` format (similar to ini).
 
 
-**acem**
+**acme**
 ```python
 import sys
 import configparser
@@ -44,14 +44,8 @@ N = 10001
 and we run it like this
 ```bash
 $ python acme ACME-solver.ini
-Running simulation described in ACME-solver.ini.
-Writing results to acme-ouput.txt
-Done
 
 $ ls
-acme
-acme-ouput.txt
-ACME-solver.ini
 
 ```
 We would like to powerup our `acme` config file to add unit suport. We start by writing a powerconf configuration
@@ -133,7 +127,7 @@ acme:
 ```
 Nex, we write an acme configuration _template_. The template is a mustache template, `powerconf render`
 will render this file using mustache with the powerconf configuration instance as a context. To inject
-the parameters, we just reference the keys under the "acem" node.
+the parameters, we just reference the keys under the "acme" node.
 
 **ACME-solver.ini.template**
 ```yaml
@@ -156,10 +150,6 @@ And finally, we can render an ACME configuration file
 $ powerconf render POWERCONFIG.yml ACME-solver.ini.template ACME-solver.ini.rendered
 
 $ ls
-acme
-acme-ouput-101.txt
-acme-ouput.txt
-ACME-solver.ini
 ACME-solver.ini.rendered
 ACME-solver.ini.template
 POWERCONFIG.yml
@@ -184,17 +174,12 @@ N = {{acme/grid/y/n}}
 Running `acme`...
 ```bash
 $ python acme ACME-solver.ini.rendered
-Running simulation described in ACME-solver.ini.rendered.
-Writing results to acme-ouput-101.txt
-Done
 
 $ ls
-acme
-acme-ouput-101.txt
-acme-ouput.txt
-ACME-solver.ini
 ACME-solver.ini.rendered
 ACME-solver.ini.template
 POWERCONFIG.yml
 
 ```
+
+An there you are, full-blown unit support for a tool that does not support them.
