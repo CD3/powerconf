@@ -1,0 +1,17 @@
+make-readme:
+  compudoc README.md.cd --comment-line-pattern '<!--{{{{CODE}}-->'
+  
+
+make-html-readme:
+  pandoc README.md -o index.html
+
+run-html-server:
+  python -m http.server
+
+
+acme:
+  uv run powerconf generate POWERCONFIG.yml /dev/stdout -n acme -f json | jq > ACME-solver.json
+  mkdir -p scratch
+  cd scratch; python ../acme ../ACME-solver.json
+  
+  
