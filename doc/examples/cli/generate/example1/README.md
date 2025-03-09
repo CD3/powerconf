@@ -171,4 +171,4 @@ POWERCONFIG.yml
 
 ```
 
-An there you are, full-blown unit support for a tool that does not support them.
+And there you are, full-blown unit support for a tool that does not support them.
