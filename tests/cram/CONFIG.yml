@@ -1,0 +1,5 @@
+simulation:
+  res: 1 um
+  min: 0 cm
+  max: 2 cm
+  N: $( (${max}-${min}) / ($res) )

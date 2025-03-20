@@ -6,9 +6,11 @@ import pathlib
 import shutil
 import stat
 import subprocess
+import tempfile
 from pathlib import Path
 from typing import Annotated
 
+import pytest
 import rich
 import typer
 from fspathtree import fspathtree
@@ -303,6 +305,29 @@ def test(
         pathlib.Path,
         typer.Argument(help="Config file to process."),
     ],
-    testsfile: Annotated[Path, typer.Argument(help="File containing tests.")],
+    tests_file: Annotated[Path, typer.Argument(help="File containing tests.")],
 ):
     """Run some unit tests against the configuration instances produced by a config."""
+
+    config_file = config_file.absolute()
+    tests_file = tests_file.absolute()
+    top_dir = pathlib.Path(os.getcwd())
+    with tempfile.TemporaryDirectory() as tdir:
+        os.chdir(tdir)
+        pathlib.Path("config.yml").write_text(config_file.read_text())
+
+        test_lines = []
+        test_lines.append(
+            r"""
+import powerconf.yaml
+from fspathtree import fspathtree
+configs = powerconf.yaml.powerload('config.yml')
+"""
+        )
+        test_lines += tests_file.read_text().split("\n")
+
+        pathlib.Path("test_config.py").write_text("\n".join(test_lines))
+
+        result = pytest.main(["test_config.py"])
+
+    os.chdir(top_dir)
