@@ -2,7 +2,9 @@ set positional-arguments
 
 
 test *args:
-        uv run pytest "$@"
+  #! /bin/bash
+  export SHELL=/bin/bash
+  uv run pytest "$@"
 
 
 make-readme:

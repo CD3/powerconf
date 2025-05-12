@@ -13,3 +13,11 @@ requirements-dev.lock
 requirements.lock
 doc/examples/cli/running_external_models_with_run_command/acme2/acme-workspace/output
 doc/examples/cli/running_external_models_with_run_command/acme/acme-workspace/output
+doc/examples/cli/generate/example3/config.json
+doc/examples/cli/render/example1/ACME-solver-workspace/configs.d
+doc/examples/cli/run/running_external_models_with_run_command/acme/acme-workspace/config_files
+doc/examples/cli/run/running_external_models_with_run_command/acme/acme-workspace/output
+doc/examples/cli/run/running_external_models_with_run_command/acme/acme-workspace
+doc/examples/cli/run/running_external_models_with_run_command/acme2/acme-workspace
+doc/examples/cli/unorganized/running_external_models_with_run_command/acme/acme-workspace
+doc/examples/cli/unorganized/running_external_models_with_run_command/acme2/acme-workspace

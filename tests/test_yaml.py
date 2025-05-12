@@ -2,6 +2,7 @@ import os
 import pathlib
 
 import pytest
+import time
 
 from powerconf import yaml
 
@@ -15,7 +16,7 @@ grid:
         min: 0 cm
         max: 1 cm
         N: $( ($max-$min)/${res} + 1)
-    x: 
+    y: 
         res: $(${../res})
         min: 0 cm
         max: 1 cm
@@ -73,3 +74,57 @@ laser:
     assert configs[0]["/laser/profile/R"].to("cm").magnitude == pytest.approx(10e-4 / 2)
 
     os.chdir(orig_path)
+
+
+def test_yaml_powerload_with_parallelization(tmp_path):
+    text = """
+grid:
+    res: 1 um
+    x: 
+        res: $(${../res})
+        min: 0 cm
+        max: 1 cm
+        N: $( ($max-$min)/${res} + 1)
+    y: 
+        res: $(${../res})
+        min: 0 cm
+        max: 1 cm
+        N: $( ($max-$min)/${res} + 1)
+laser:
+    profile:
+        R: $(${D}/2)
+        D: 10 um
+slow: $(time.sleep(2))
+---
+laser:
+    pulse:
+        tau: 10 us
+---
+laser:
+    pulse:
+        tau: 100 us
+"""
+    extensions= """
+import time
+
+    """
+    orig_path = os.getcwd()
+    os.chdir(tmp_path)
+
+    config_file = pathlib.Path("CONFIG.yml")
+    config_file.write_text(text)
+    extensions_file = pathlib.Path("powerconf_extensions.py")
+    extensions_file.write_text(extensions)
+
+    start = time.perf_counter_ns()
+    configs = yaml.powerload(config_file)
+    stop = time.perf_counter_ns()
+    serial_runtime = stop - start
+
+    start = time.perf_counter_ns()
+    configs = yaml.powerload(config_file,njobs=2)
+    stop = time.perf_counter_ns()
+    parallel_runtime = stop - start
+
+
+    assert parallel_runtime < 0.75*serial_runtime
