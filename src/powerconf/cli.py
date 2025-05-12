@@ -10,7 +10,6 @@ import tempfile
 from pathlib import Path
 from typing import Annotated
 
-import pytest
 import rich
 import typer
 from fspathtree import fspathtree
@@ -315,6 +314,7 @@ def test(
     tests_file: Annotated[Path, typer.Argument(help="File containing tests.")],
 ):
     """Run some unit tests against the configuration instances produced by a config."""
+    import pytest
 
     config_file = config_file.absolute()
     tests_file = tests_file.absolute()
