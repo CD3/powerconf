@@ -1,6 +1,6 @@
 [project]
 name = "powerconf"
-version = "0.5.0"
+version = "0.6.0"
 description = "Powerup you configuration files."
 dependencies = [
     "pint>=0.24.3",
