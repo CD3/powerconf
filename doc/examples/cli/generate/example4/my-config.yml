@@ -1,0 +1,34 @@
+grid:
+  res: !!python/object/apply:pint._unpickle_quantity
+  - &id001 !!python/name:pint.facets.plain.quantity.PlainQuantity ''
+  - 1
+  - !!python/object/new:pint.util.UnitsContainer
+    state: !!python/tuple
+    - !!python/object/new:pint.util.udict
+      dictitems:
+        micrometer: 1
+    - 1
+    - &id002 !!python/name:builtins.float ''
+  x:
+    N: !!python/object/apply:pint._unpickle_quantity
+    - *id001
+    - 1.0
+    - !!python/object/new:pint.util.UnitsContainer
+      state: !!python/tuple
+      - !!python/object/new:pint.util.udict
+        dictitems:
+          centimeter: 1
+          micrometer: -1
+      - 1
+      - *id002
+    max: !!python/object/apply:pint._unpickle_quantity
+    - *id001
+    - 1
+    - !!python/object/new:pint.util.UnitsContainer
+      state: !!python/tuple
+      - !!python/object/new:pint.util.udict
+        dictitems:
+          centimeter: 1
+      - 1
+      - *id002
+    none: null

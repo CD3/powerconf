@@ -1,0 +1,4 @@
+generate:
+  uv run powerconf generate POWERCONFIG.yml my-config.yml
+generate-parallel:
+  uv run powerconf generate POWERCONFIG.yml my-config.yml --jobs $(nproc)

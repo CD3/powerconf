@@ -1,0 +1,107 @@
+The `generate` command is used to interop with third-party tools that read tree-structured configuratoin data from a supported format.
+
+Consider a fictional tool named `acme`. This tool reads configuration files in JSON format.
+
+<!-- {{{      -->
+<!-- from pathlib import Path as P          -->
+<!-- code = P('acme').read_text()           -->
+<!-- }}}      -->
+
+**acme**
+```python
+{{code}}
+```
+
+A typical configuration file looks something like this:
+<!-- {{{      -->
+<!-- from pathlib import Path as P          -->
+<!-- code = P('ACME-solver.json').read_text()           -->
+<!-- }}}      -->
+
+```json
+{{code}}
+```
+
+and we run it like this
+<!-- {{{      -->
+<!-- from subprocess import check_output as run                                             -->
+<!-- run('rm -r scratch',shell=True)                                                        -->
+<!-- run('mkdir scratch; cd scratch; cp ../acme ../ACME-solver.json',shell=True)           -->
+<!-- acme_output = run('cd scratch; python acme ACME-solver.json',shell=True).decode()      -->
+<!-- ls_output = run('cd scratch; ls',shell=True).decode()                                  -->
+<!-- }}}      -->
+```bash
+$ python acme ACME-solver.json
+{{acme_output}}
+$ ls
+{{ls_output}}
+```
+We would like to powerup our `acme` config file to add unit support. We start by writing a powerconf configuration
+file. We are free to structure the configuration however we want, config parameters can be given as quantities with units,
+and we can use expressions that calculate the value of some parameters based on the value of others.
+<!-- {{{      -->
+<!-- code = P('POWERCONFIG.yml').read_text().split("#")[0]           -->
+<!-- }}}      -->
+
+**POWERCONFIG.yml**
+```yaml
+{{code}}
+```
+
+We can test that this configuration works with the `print-instances` command:
+<!-- {{{      -->
+<!-- output = "simulation"+run('uv run powerconf print-instances POWERCONFIG.yml',shell=True).decode().split('simulation')[2]           -->
+<!-- }}}      -->
+
+```bash
+$ powerconf print-instances
+{{output}}
+```
+
+Next, we add a section to our configuration file for the acme tool. We replicate the acme config file tree
+computing the value for each parameter using expressions that reference the main config.
+The purpose of this section is to unit convert all parameters to the unit expected by the acme tool and
+strip the units.
+<!-- {{{      -->
+<!-- code = P('POWERCONFIG.yml').read_text()                         -->
+<!-- }}}      -->
+
+**POWERCONFIG.yml**
+```yaml
+{{code}}
+```
+
+Now we can generate an acme config file
+<!-- {{{      -->
+<!-- run('mkdir scratch; cd scratch; cp ../acme ../POWERCONFIG.yml  .',shell=True)           -->
+<!-- powerconf_output = run('cd scratch; uv run powerconf generate POWERCONFIG.yml /dev/stdout -n acme -f json | jq >  ACME-simulation.json.generated',shell=True).decode()           -->
+<!-- ls_output = run('cd scratch; ls',shell=True).decode()           -->
+<!-- }}}      -->
+```bash
+$ powerconf generate POWERCONFIG.yml ACME-solver.json.generated -n acme -f json
+{{powerconf_output}}
+$ ls
+{{ls_output}}
+```
+The `-n` option takes the name of a node. The `generate` command will write the tree below the node to the output file. The `-f` option
+specifies the output file format. The generated JSON file:
+
+<!-- {{{      -->
+<!-- code = P('scratch/ACME-simulation.json.generated').read_text()           -->
+<!-- }}}      -->
+```json
+{{code}}
+```
+Running `acme`:
+<!-- {{{      -->
+<!-- acme_output = run('cd scratch; python acme ACME-solver.json.generated',shell=True).decode()           -->
+<!-- ls_output = run('cd scratch; ls',shell=True).decode()           -->
+<!-- }}}      -->
+```bash
+$ python acme ACME-solver.json.generated
+{{acme_output}}
+$ ls
+{{ls_output}}
+```
+
+An there you are, full-blown unit support for a tool that does not support them.

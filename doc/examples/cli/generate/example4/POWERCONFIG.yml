@@ -1,0 +1,13 @@
+grid:
+  res: $(${/batch/res})
+  x:
+    max: 1 cm
+    N: $( ${max} / ${../res} )
+    none: $( time.sleep(2) )
+batch:
+  res:
+    '@batch':
+      - 1 um
+      - 2 um
+      - 3 um
+  

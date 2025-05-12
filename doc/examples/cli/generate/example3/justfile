@@ -1,0 +1,15 @@
+make-readme:
+  compudoc README.md.cd --comment-line-pattern '<!--{{{{CODE}}-->'
+  
+
+make-html-readme:
+  pandoc README.md -o index.html
+
+run-html-server:
+  python -m http.server
+
+
+generte-configs:
+  time uv run powerconf generate POWERCONFIG.yml config.json -n acme -f json 
+  
+  

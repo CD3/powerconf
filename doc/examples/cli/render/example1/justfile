@@ -1,5 +1,8 @@
 make-readme:
   compudoc README.md.cd --comment-line-pattern '<!--{{{{CODE}}-->'
 acme:
-  uv run powerconf render CONFIG-simple_layer.yml ACME-solver.ini.template ACME-solver-workspace/configs.d
+  uv run powerconf render POWERCONFIG.yml ACME-solver.ini.template ACME-solver-workspace/configs.d/ACME-solver.ini
+  cd ACME-solver-workspace && qrun -C 'python ../acme' -d ' ' configs.d/*
+acme-parallel:
+  uv run powerconf render POWERCONFIG.yml ACME-solver.ini.template ACME-solver-workspace/configs.d/ACME-solver.ini --jobs $(nproc)
   cd ACME-solver-workspace && qrun -C 'python ../acme' -d ' ' configs.d/*

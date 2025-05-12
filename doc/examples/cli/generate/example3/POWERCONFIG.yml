@@ -1,0 +1,55 @@
+simulation:
+  laser:
+    wavelength:
+      '@batch':
+        - 530 nm
+        - 531 nm
+        - 532 nm
+        - 533 nm
+        - 534 nm
+        - 535 nm
+    power:
+      '@batch': 
+        - 0.1 W
+        - 0.3 W
+        - 1.0 W
+    radius:
+      '@batch': 
+        - 0.1 cm
+        - 0.2 cm
+        - 0.3 cm
+        - 0.4 cm
+        - 0.5 cm
+        - 0.6 cm
+        - 0.7 cm
+        - 0.8 cm
+        - 0.9 cm
+        - 1.0 cm
+        
+  grid:
+    res: $( get_resolution() ) # from the extension file...
+    x:
+      min: 0 um
+      max: $(2*${../../laser/radius})
+      n: $(int(${max}/${../res}) + 1)
+    y:
+      min: 0 um
+      max: $(2*${../../laser/radius})
+      n: $(int(${max}/${../res}) + 1)
+
+# parameters that will be inserted diredctly into ACME config file.
+# these parameters _MUST_ be given.
+# all quantities need to be converted to ACME internal units (cgs)
+# and turned into plain numbers.
+acme:
+    simulation:
+      output_file: acme-ouput-$(${../grid/x/n}).txt
+    grid:
+      x:
+        n: $($/simulation/grid/x/n)
+        min: $($/simulation/grid/x/min.to('cm').magnitude)
+        max: $($/simulation/grid/x/max.to('cm').magnitude)
+      y:
+        n: $($/simulation/grid/y/n)
+        min: $($/simulation/grid/y/min.to('cm').magnitude)
+        max: $($/simulation/grid/y/max.to('cm').magnitude)
