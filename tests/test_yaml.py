@@ -1,10 +1,10 @@
 import os
 import pathlib
-
-import pytest
 import time
 
-from powerconf import yaml
+import pytest
+
+from powerconf import units, yaml
 
 
 def test_yaml_powerload(tmp_path):
@@ -104,7 +104,7 @@ laser:
     pulse:
         tau: 100 us
 """
-    extensions= """
+    extensions = """
 import time
 
     """
@@ -122,9 +122,51 @@ import time
     serial_runtime = stop - start
 
     start = time.perf_counter_ns()
-    configs = yaml.powerload(config_file,njobs=2)
+    configs = yaml.powerload(config_file, njobs=2)
     stop = time.perf_counter_ns()
     parallel_runtime = stop - start
 
+    assert parallel_runtime < 0.75 * serial_runtime
 
-    assert parallel_runtime < 0.75*serial_runtime
+
+def test_yaml_powerload_with_transform(tmp_path):
+    text = """
+grid:
+    res: 1 um
+    x: 
+        res: $(${../res})
+        min: 0 cm
+        max: 1 cm
+        N: $( ($max-$min)/${res} + 1)
+    y: 
+        res: $(${../res})
+        min: 0 cm
+        max: 1 cm
+        N: $( ($max-$min)/${res} + 1)
+"""
+    orig_path = os.getcwd()
+    os.chdir(tmp_path)
+
+    config_file = pathlib.Path("CONFIG.yml")
+    config_file.write_text(text)
+
+    configs = yaml.powerload(config_file)
+    assert len(configs) == 1
+    assert type(configs[0]["/grid/x/max"]) is type(units.Q_(1, "s"))
+
+    def mkstr(p, v):
+        return str(v)
+
+    def mkstr(p, v):
+        return str(v)
+
+    configs = yaml.powerload(config_file, transform=mkstr)
+    assert len(configs) == 1
+    assert type(configs[0]["/grid/x/max"]) is str
+
+    configs = yaml.powerload(config_file, transform=mkstr, njobs=2)
+    assert len(configs) == 1
+    assert type(configs[0]["/grid/x/max"]) is str
+
+
+    os.chdir(orig_path)

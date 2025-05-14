@@ -1,13 +1,36 @@
+import inspect
 import itertools
 import pathlib
+import textwrap
 import time
+from types import FunctionType
 from typing import List
 
 from fspathtree import fspathtree
 
-from . import loaders, rendering
+from . import loaders, rendering, utils
+from .parallel_processing import BatchJobController, mkmsg
 from .pyyaml import dump, safe_load
-from .parallel_processing import mkmsg,BatchJobController
+
+
+def _get_function_name(src):
+    """
+    Given the source code for a function, extract the function's name.
+    """
+    # a dumb first cut
+    name = src.strip()
+    if not name.startswith("def "):
+        raise RuntimeError(
+            f"Cannot determine the name of function from definition\n{src}"
+        )
+    name = name[3:].strip()
+    if "(" not in name:
+        raise RuntimeError(
+            f"Cannot determine the name of function from definition\n{src}"
+        )
+
+    return name[: name.find("(")]
+
 
 def config_renderer_server_func(link):
     config_renderer = rendering.ConfigRenderer()
@@ -15,16 +38,24 @@ def config_renderer_server_func(link):
         msg = link.recv()
         if msg == "stop":
             break
-        if msg['type'] == "expand_batch_nodes":
-            res = config_renderer.expand_batch_nodes(msg['payload'])
+        if msg["type"] == "expand_batch_nodes":
+            res = config_renderer.expand_batch_nodes(msg["payload"])
             link.send(res)
-        if msg['type'] == "render":
-            res = config_renderer.render(msg['payload'])
+        if msg["type"] == "render":
+            res = config_renderer.render(msg["payload"])
             link.send(res)
+        if msg["type"] == "transform":
+            config = msg["payload"]["config"]
+            transform_src = msg["payload"]["transform"]
+            transform_name = _get_function_name(transform_src)
+            exec(transform_src)
+            exec(f"""utils.apply_transform(config, {transform_name})""")
+            link.send(config)
 
 
-
-def powerload(config_file: pathlib.Path, njobs = None) -> List[fspathtree]:
+def powerload(
+    config_file: pathlib.Path, /, njobs=None, transform=None
+) -> List[fspathtree]:
     """
     Load a set of configurations from a YAML files.
 
@@ -63,17 +94,34 @@ def powerload(config_file: pathlib.Path, njobs = None) -> List[fspathtree]:
             )
         )
         rendered_configs = list(map(config_renderer.render, unrendered_configs))
+        if transform is not None:
+            utils.apply_transform(rendered_configs, transform)
         return rendered_configs
 
+    if transform is not None:
+        if not isinstance(transform, FunctionType):
+            raise RuntimeError("Transforms can only be function types")
+        # can't send a function through the pipe, so we need are sending the source code instead
+        # and then we'll exec it on the other end. What could go wrong...
+        transform_src = textwrap.dedent("".join(inspect.getsourcelines(transform)[0]))
+        if not transform_src.startswith("def"):
+            raise RuntimeError(
+                "Transforms can only be free functions when using parallel processing"
+            )
+
     config_renderer_server = BatchJobController(config_renderer_server_func)
-    jobs = list(map(lambda c: mkmsg("expand_batch_nodes",c), complete_configs))
+    jobs = list(map(lambda c: mkmsg("expand_batch_nodes", c), complete_configs))
     unrendered_config = list(itertools.chain(*config_renderer_server.run_jobs(jobs)))
-    jobs = list(map(lambda c: mkmsg("render",c), unrendered_config))
+    jobs = list(map(lambda c: mkmsg("render", c), unrendered_config))
     rendered_configs = config_renderer_server.run_jobs(jobs)
+    if transform:
+        jobs = list(
+            map(
+                lambda c: mkmsg("transform", {"transform": transform_src, "config": c}),
+                rendered_configs,
+            )
+        )
+        rendered_configs = config_renderer_server.run_jobs(jobs)
     config_renderer_server.stop()
     config_renderer_server.wait()
     return rendered_configs
-
-
-
-
