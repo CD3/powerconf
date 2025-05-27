@@ -1,0 +1,12 @@
+simulation:
+  grid:
+    res: 1 um
+    x:
+      min: 0 um
+      max: 100 um
+      n: $(int(${max}/${../res}) + 1)
+    y:
+      min: 0 um
+      max: 1 cm
+      n: $(int(${max}/${../res}) + 1)
+

@@ -14,7 +14,7 @@ import rich
 import typer
 from fspathtree import fspathtree
 
-from . import rendering, utils, yaml
+from . import rendering, utils, validation, yaml
 
 app = typer.Typer()
 
@@ -57,9 +57,17 @@ def version():
 
 
 @app.command()
-def render(config_file: Path, template_file: Path, output: Path,
-           njobs:Annotated[ int, typer.Option("-j", "--jobs", help="Parallelize processing of multiple config instances.")]=1,
-           ):
+def render(
+    config_file: Path,
+    template_file: Path,
+    output: Path,
+    njobs: Annotated[
+        int,
+        typer.Option(
+            "-j", "--jobs", help="Parallelize processing of multiple config instances."
+        ),
+    ] = 1,
+):
     """
     Read a powerconf-enabled configuration file and write a rendered configuration file from a template.
 
@@ -106,7 +114,12 @@ def generate(
             help="Select a node in the configuration tree. All nodes below the selected nod will be written to output as if they are in the root of a configuration tree.",
         ),
     ] = "/",
-    njobs:Annotated[ int, typer.Option("-j", "--jobs", help="Parallelize processing of multiple config instances.")]=1,
+    njobs: Annotated[
+        int,
+        typer.Option(
+            "-j", "--jobs", help="Parallelize processing of multiple config instances."
+        ),
+    ] = 1,
 ):
     """
     Read a powerconf-enabled configuration file and write a generated configuration file.
@@ -116,7 +129,7 @@ def generate(
     of these tools in a single powerconf config file and then write them to separate
     config files in different formats (yaml, json, etc).
     """
-    configs = yaml.powerload(config_file,njobs=njobs)
+    configs = yaml.powerload(config_file, njobs=njobs)
 
     def write(config, output: Path):
         fmt = output_format.lower()
@@ -157,9 +170,15 @@ def generate(
 
 
 @app.command()
-def print_instances(config_file: Path,
-           njobs:Annotated[ int, typer.Option("-j", "--jobs", help="Parallelize processing of multiple config instances.")]=1,
-                    ):
+def print_instances(
+    config_file: Path,
+    njobs: Annotated[
+        int,
+        typer.Option(
+            "-j", "--jobs", help="Parallelize processing of multiple config instances."
+        ),
+    ] = 1,
+):
     """
     Print instances of configuration trees generated from the config.
     """
@@ -255,9 +274,14 @@ def run(
         bool,
         typer.Option("--dry-run", "-n", help="Don't run jobs, just set them up."),
     ] = False,
-           njobs:Annotated[ int, typer.Option("-j", "--jobs", help="Parallelize processing of multiple config instances.")]=1,
+    njobs: Annotated[
+        int,
+        typer.Option(
+            "-j", "--jobs", help="Parallelize processing of multiple config instances."
+        ),
+    ] = 1,
 ):
-    configs = yaml.powerload(config_file,njobs=njobs)
+    configs = yaml.powerload(config_file, njobs=njobs)
     # check that all configs have a section for the given tool.
     for i, config in enumerate(configs):
         if f"/powerconf-run/{tool}" not in config:
@@ -338,3 +362,32 @@ configs = powerconf.yaml.powerload('config.yml')
         result = pytest.main(["test_config.py"])
 
     os.chdir(top_dir)
+
+
+@app.command()
+def validate(
+    config_file: Annotated[
+        pathlib.Path,
+        typer.Argument(help="Config file to process."),
+    ],
+    validate_file: Annotated[
+        Path, typer.Argument(help="File validation functions.")
+    ] = "powerconf_validate.py",
+):
+
+    if not config_file.exists():
+        raise typer.Exit(f"File '{config_file}' not found.")
+    if not validate_file.exists():
+        raise typer.Exit(f"File '{validate_file}' not found.")
+
+    configs = yaml.powerload(config_file, njobs=multiprocessing.cpu_count())
+    for i, config in enumerate(configs):
+        console.print(f"Validating config instance {i}")
+        validation_results = validation.validate_config(config, validate_file)
+        for fname in validation_results:
+            if validation_results[fname]["result"] == "pass":
+                console.print(f"{fname}: [green]Passed[/green]")
+            else:
+                error_console.print(f"  {fname}: [red]Failed[/red]")
+                e = validation_results[fname]["exception"]
+                error_console.print(f"    Error: {e}")

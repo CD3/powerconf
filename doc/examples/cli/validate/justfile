@@ -1,0 +1,2 @@
+run:
+  uv run powerconf validate POWERCONFIG.yml
