@@ -1,0 +1,13 @@
+0. install: `uv tool install powerconf`
+1. expression evaluation
+2. local variable expansion
+3. absolute variable expansion 
+4. relative variable expansion
+   1. usage
+   1. example error 1
+   1. example error 2
+5. '@batch'
+6. multi-documents
+7. `powerconf render` and `powerconf generate`
+8. output file names
+9. extensions

@@ -1,0 +1,8 @@
+laser:
+  wavelength: 532 nm
+  one_over_e_diameter: 2 cm
+grid:
+  x:
+    min: 0 cm
+    max: 4 cm
+    N: $( (${max}-${min}).magnitude*100 )

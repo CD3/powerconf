@@ -1,0 +1,23 @@
+grid:
+  x:
+    min: 0 cm
+    max: $(2*${/laser/one_over_e_diameter})
+    N: $( (${max}-${min}).magnitude*100 )
+  y:
+    min: $(${../x/min})
+    max: $(${../x/max})
+    N: $(${../x/N})
+laser:
+  wavelength: 
+    '@batch':
+      - 532 nm
+      - 1070 nm
+  scale:
+    '@batch':
+      - 1
+      - 2
+      - 4
+  one_over_e_diameter: $( ${scale}*${wavelength} )
+
+output:
+  filename: OUTPUT-$( (str(${/laser/wavelength}) + "-" + str(${/laser/one_over_e_diameter})).replace(" ","_")).txt

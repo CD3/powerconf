@@ -1,0 +1,18 @@
+laser:
+  wavelength:
+    '@batch':
+      - 532 nm
+      - 1070 nm
+  one_over_e_diameter:
+    '@batch':
+      - 0.1 cm
+      - 0.2 cm
+grid:
+  x:
+    min: 0 cm
+    max: $(2*${/laser/one_over_e_diameter})
+    N: $( (${max}-${min}).magnitude*100 )
+  y:
+    min: $(${../x/min})
+    max: $(${../x/max})
+    N: $(${../x/N})

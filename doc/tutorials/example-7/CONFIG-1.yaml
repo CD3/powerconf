@@ -1,0 +1,16 @@
+laser:
+  wavelength: 532 nm
+  one_over_e_diameter: 0.1 cm
+grid:
+  x:
+    min: 0 cm
+    max: $(2*${/laser/one_over_e_diameter})
+    N: $( (${max}-${min}).magnitude*100 )
+  y:
+    min: $(${../x/min})
+    max: $(${../x/max})
+    N: $(${../x/N})
+
+acme:
+  wavelength: $(${/laser/wavelength}.to("um").magnitude)
+  diameter: $(${/laser/one_over_e_diameter}.to("cm").magnitude)
