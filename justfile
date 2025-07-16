@@ -8,7 +8,7 @@ test *args:
 
 
 make-readme:
-  compudoc README-template.md README.md
+  compudoc README.md.cd README.md --comment-line-pattern "<!--{{{{CODE}}-->"
 
 publish:
   rm dist -rf
