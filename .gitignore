@@ -21,3 +21,4 @@ doc/examples/cli/run/running_external_models_with_run_command/acme/acme-workspac
 doc/examples/cli/run/running_external_models_with_run_command/acme2/acme-workspace
 doc/examples/cli/unorganized/running_external_models_with_run_command/acme/acme-workspace
 doc/examples/cli/unorganized/running_external_models_with_run_command/acme2/acme-workspace
+.lvimrc
