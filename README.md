@@ -19,7 +19,7 @@
         -   [`powerconf render`](#powerconf-render){#toc-powerconf-render}
 
 # powerconf
-<!-- table_of_contents = textwrap.dedent(check_output('pandoc -s --toc -f markdown -t markdown -o /dev/stdout README.md.cd | sed -n "/#toc-powerconf/,/# powerconf/p" | tail -n+2 | head -n-2',shell=True).decode().strip()) -->
+<!-- table_of_contents = textwrap.dedent(check_output('pandoc -s --toc -f markdown -t markdown -o /dev/stdout README.md.cd | sed -n "/#toc-powerconf/,/# powerconf/p; s/{#.*}$//" | tail -n+2 | head -n-2',shell=True).decode().strip()) -->
 <!-- }}} -->
 
 {{table_of_contents}}
@@ -1024,7 +1024,7 @@ $ powerconf print-instances CONFIG.yaml
 │   188 │   )                                                                  │
 │                                                                              │
 │ ╭────────────────── locals ───────────────────╮                              │
-│ │ config_file = PosixPath('/tmp/tmpystwn1ep') │                              │
+│ │ config_file = PosixPath('/tmp/tmph33ud9h3') │                              │
 │ │       njobs = 1                             │                              │
 │ ╰─────────────────────────────────────────────╯                              │
 │                                                                              │
@@ -1042,20 +1042,20 @@ $ powerconf print-instances CONFIG.yaml
 │ ╭───────────────────────────────── locals ─────────────────────────────────╮ │
 │ │   complete_configs = [                                                   │ │
 │ │                      │   <fspathtree.fspathtree.fspathtree object at     │ │
-│ │                      0x76948ab5cfb0>                                     │ │
+│ │                      0x7fee9036e780>                                     │ │
 │ │                      ]                                                   │ │
 │ │        config_docs = [                                                   │ │
 │ │                      │   <fspathtree.fspathtree.fspathtree object at     │ │
-│ │                      0x76948ab5cfb0>                                     │ │
+│ │                      0x7fee9036e780>                                     │ │
 │ │                      ]                                                   │ │
-│ │        config_file = PosixPath('/tmp/tmpystwn1ep')                       │ │
+│ │        config_file = PosixPath('/tmp/tmph33ud9h3')                       │ │
 │ │    config_renderer = <powerconf.rendering.ConfigRenderer object at       │ │
-│ │                      0x76948ad15c70>                                     │ │
+│ │                      0x7fee900760c0>                                     │ │
 │ │              njobs = 1                                                   │ │
 │ │          transform = None                                                │ │
 │ │ unrendered_configs = [                                                   │ │
 │ │                      │   <fspathtree.fspathtree.fspathtree object at     │ │
-│ │                      0x76948aa83ec0>                                     │ │
+│ │                      0x7fee8ff90770>                                     │ │
 │ │                      ]                                                   │ │
 │ ╰──────────────────────────────────────────────────────────────────────────╯ │
 │                                                                              │
@@ -1071,33 +1071,33 @@ $ powerconf print-instances CONFIG.yaml
 │   214                                                                        │
 │                                                                              │
 │ ╭───────────────────────────────── locals ─────────────────────────────────╮ │
-│ │    config = <fspathtree.fspathtree.fspathtree object at 0x76948aa83ec0>  │ │
+│ │    config = <fspathtree.fspathtree.fspathtree object at 0x7fee8ff90770>  │ │
 │ │     cycle = [                                                            │ │
+│ │             │   PurePosixPath('/node1/node2/val1'),                      │ │
 │ │             │   PurePosixPath('/node1/node2/val3'),                      │ │
-│ │             │   PurePosixPath('/node1/node2/val2'),                      │ │
-│ │             │   PurePosixPath('/node1/node2/val1')                       │ │
+│ │             │   PurePosixPath('/node1/node2/val2')                       │ │
 │ │             ]                                                            │ │
 │ │    cycles = [                                                            │ │
 │ │             │   [                                                        │ │
+│ │             │   │   PurePosixPath('/node1/node2/val1'),                  │ │
 │ │             │   │   PurePosixPath('/node1/node2/val3'),                  │ │
-│ │             │   │   PurePosixPath('/node1/node2/val2'),                  │ │
-│ │             │   │   PurePosixPath('/node1/node2/val1')                   │ │
+│ │             │   │   PurePosixPath('/node1/node2/val2')                   │ │
 │ │             │   ]                                                        │ │
 │ │             ]                                                            │ │
 │ │       dep = PurePosixPath('/node1/node2/val2')                           │ │
-│ │         G = <networkx.classes.digraph.DiGraph object at 0x76948ace5d00>  │ │
+│ │         G = <networkx.classes.digraph.DiGraph object at 0x7fee90227830>  │ │
 │ │ make_copy = True                                                         │ │
-│ │       msg = 'Circular dependencies detected.(/node1/node2/val3 ->        │ │
-│ │             /node1/node2/val2 -> /node1'+12                              │ │
+│ │       msg = 'Circular dependencies detected.(/node1/node2/val1 ->        │ │
+│ │             /node1/node2/val3 -> /node1'+12                              │ │
 │ │      node = PurePosixPath('/node1/node2/val3')                           │ │
 │ │      self = <powerconf.rendering.ConfigRenderer object at                │ │
-│ │             0x76948ad15c70>                                              │ │
+│ │             0x7fee900760c0>                                              │ │
 │ │         v = PurePosixPath('val2')                                        │ │
 │ │ variables = [PurePosixPath('val2')]                                      │ │
 │ ╰──────────────────────────────────────────────────────────────────────────╯ │
 ╰──────────────────────────────────────────────────────────────────────────────╯
-RuntimeError: Circular dependencies detected.(/node1/node2/val3 -> 
-/node1/node2/val2 -> /node1/node2/val1)
+RuntimeError: Circular dependencies detected.(/node1/node2/val1 -> 
+/node1/node2/val3 -> /node1/node2/val2)
 
 ```
 
