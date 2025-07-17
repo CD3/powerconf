@@ -64,10 +64,6 @@ $ pip install powerconf
 ```
 
 
-## Using
-
-powerconf consists of a Python module that you can use to load and/or render your configuration files and a standalone command line application.
-
 ## Motivation
 
 Let's say you are writing a model in Python to do some sort of physics calculation. 
@@ -126,15 +122,9 @@ know how to compute the parameters your model needs. And, if you are the main us
 to quickly configure the model with new configuration parameters without having to modify code is huge.
 
 
+## Using
 
-
-
-
-## Features
-
-## Details
-
-### Interop with outside tools
+powerconf consists of a Python module that you can use to load and/or render your configuration files and a standalone command line application.
 
 ### Expression Evaluation
 
