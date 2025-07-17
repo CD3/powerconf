@@ -493,9 +493,9 @@ $ powerconf print-instances CONFIG.yaml
 ```
 ```
 
-## Configuring external tools/simulations
+### Configuring external tools/simulations
 
-### `powerconf generate`
+#### `powerconf generate`
 
 If your writing a new model in Python, you can use PowerConf to load your
 configuration from yaml files.
@@ -639,7 +639,7 @@ $ ls ACME-CONFIG.d
 ```
 
 
-### `powerconf render`
+#### `powerconf render`
 
 For models that read some other configuration file format (which is probably
 more common), the `powerconf render` command can be used to generate
