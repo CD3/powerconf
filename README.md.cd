@@ -1,5 +1,7 @@
 # powerconf
 
+Powerful configuration tools for numerical models.
+
 <!-- {{{ -->
 <!-- from pathlib import * -->
 <!-- import os -->
@@ -9,12 +11,10 @@
 <!-- }}} -->
 
 <!-- {{{ -->
-<!-- table_of_contents = textwrap.dedent(check_output('pandoc -s --toc -f markdown -t markdown -o /dev/stdout README.md.cd | sed -n "/#toc-powerconf/,/# powerconf/p; s/{#.*}$//" | tail -n+2 | head -n-2',shell=True).decode().strip()) -->
+<!-- table_of_contents = textwrap.dedent(check_output('pandoc -s --toc -f markdown -t markdown -o /dev/stdout README.md.cd | sed -n "2,/# powerconf/ s/{#.*}.*$//p"',shell=True).decode().strip()) -->
 <!-- }}} -->
 
 {{table_of_contents}}
-
-Powerful configuration tools for numerical models.
 
 `powerconf` allows you to write configuration files for things like physics simulations
 with support for variable interpolation and expression evaluation. Consider a simulation
