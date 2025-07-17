@@ -22,7 +22,7 @@ def main():
                     title = m.group(2).strip()
                     anchor = title_to_anchor(title)
                     prefix = level.replace("#", "  ")
-                    print(f"{prefix}- [{title}]({anchor})")
+                    print(f"{prefix}- [{title}](#{anchor})")
 
 
 if __name__ == "__main__":
