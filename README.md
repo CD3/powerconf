@@ -4,20 +4,20 @@ Powerful configuration tools for numerical models.
 
 
 
- - [powerconf](powerconf)
-  - [Install](install)
-  - [Using](using)
-  - [Motivation](motivation)
-  - [Features](features)
-  - [Details](details)
-   - [Interop with outside tools](interop-with-outside-tools)
-   - [Expression Evaluation](expression-evaluation)
-   - [Variable Expansion](variable-expansion)
-   - [Units](units)
-   - [Batch Configurations](batch-configurations)
-  - [Configuring external tools/simulations](configuring-external-tools/simulations)
-   - [`powerconf generate`](`powerconf-generate`)
-   - [`powerconf render`](`powerconf-render`)
+  - [powerconf](powerconf)
+    - [Install](install)
+    - [Using](using)
+    - [Motivation](motivation)
+    - [Features](features)
+    - [Details](details)
+      - [Interop with outside tools](interop-with-outside-tools)
+      - [Expression Evaluation](expression-evaluation)
+      - [Variable Expansion](variable-expansion)
+      - [Units](units)
+      - [Batch Configurations](batch-configurations)
+    - [Configuring external tools/simulations](configuring-external-tools/simulations)
+      - [`powerconf generate`](`powerconf-generate`)
+      - [`powerconf render`](`powerconf-render`)
 
 
 `powerconf` allows you to write configuration files for things like physics simulations
@@ -299,7 +299,7 @@ $ powerconf print-instances CONFIG.yaml
 │   188 │   )                                                                  │
 │                                                                              │
 │ ╭────────────────── locals ───────────────────╮                              │
-│ │ config_file = PosixPath('/tmp/tmpkfvix8rk') │                              │
+│ │ config_file = PosixPath('/tmp/tmpisn3tujp') │                              │
 │ │       njobs = 1                             │                              │
 │ ╰─────────────────────────────────────────────╯                              │
 │                                                                              │
@@ -317,20 +317,20 @@ $ powerconf print-instances CONFIG.yaml
 │ ╭───────────────────────────────── locals ─────────────────────────────────╮ │
 │ │   complete_configs = [                                                   │ │
 │ │                      │   <fspathtree.fspathtree.fspathtree object at     │ │
-│ │                      0x7185e9bb6480>                                     │ │
+│ │                      0x7b0b0133aff0>                                     │ │
 │ │                      ]                                                   │ │
 │ │        config_docs = [                                                   │ │
 │ │                      │   <fspathtree.fspathtree.fspathtree object at     │ │
-│ │                      0x7185e9bb6480>                                     │ │
+│ │                      0x7b0b0133aff0>                                     │ │
 │ │                      ]                                                   │ │
-│ │        config_file = PosixPath('/tmp/tmpkfvix8rk')                       │ │
+│ │        config_file = PosixPath('/tmp/tmpisn3tujp')                       │ │
 │ │    config_renderer = <powerconf.rendering.ConfigRenderer object at       │ │
-│ │                      0x71861e7bb3b0>                                     │ │
+│ │                      0x7b0b35ea1670>                                     │ │
 │ │              njobs = 1                                                   │ │
 │ │          transform = None                                                │ │
 │ │ unrendered_configs = [                                                   │ │
 │ │                      │   <fspathtree.fspathtree.fspathtree object at     │ │
-│ │                      0x7185e98a4320>                                     │ │
+│ │                      0x7b0b01083620>                                     │ │
 │ │                      ]                                                   │ │
 │ ╰──────────────────────────────────────────────────────────────────────────╯ │
 │                                                                              │
@@ -346,33 +346,33 @@ $ powerconf print-instances CONFIG.yaml
 │   214                                                                        │
 │                                                                              │
 │ ╭───────────────────────────────── locals ─────────────────────────────────╮ │
-│ │    config = <fspathtree.fspathtree.fspathtree object at 0x7185e98a4320>  │ │
+│ │    config = <fspathtree.fspathtree.fspathtree object at 0x7b0b01083620>  │ │
 │ │     cycle = [                                                            │ │
+│ │             │   PurePosixPath('/node1/node2/val3'),                      │ │
 │ │             │   PurePosixPath('/node1/node2/val2'),                      │ │
-│ │             │   PurePosixPath('/node1/node2/val1'),                      │ │
-│ │             │   PurePosixPath('/node1/node2/val3')                       │ │
+│ │             │   PurePosixPath('/node1/node2/val1')                       │ │
 │ │             ]                                                            │ │
 │ │    cycles = [                                                            │ │
 │ │             │   [                                                        │ │
+│ │             │   │   PurePosixPath('/node1/node2/val3'),                  │ │
 │ │             │   │   PurePosixPath('/node1/node2/val2'),                  │ │
-│ │             │   │   PurePosixPath('/node1/node2/val1'),                  │ │
-│ │             │   │   PurePosixPath('/node1/node2/val3')                   │ │
+│ │             │   │   PurePosixPath('/node1/node2/val1')                   │ │
 │ │             │   ]                                                        │ │
 │ │             ]                                                            │ │
 │ │       dep = PurePosixPath('/node1/node2/val2')                           │ │
-│ │         G = <networkx.classes.digraph.DiGraph object at 0x7185e9afe0c0>  │ │
+│ │         G = <networkx.classes.digraph.DiGraph object at 0x7b0b0131d820>  │ │
 │ │ make_copy = True                                                         │ │
-│ │       msg = 'Circular dependencies detected.(/node1/node2/val2 ->        │ │
-│ │             /node1/node2/val1 -> /node1'+12                              │ │
+│ │       msg = 'Circular dependencies detected.(/node1/node2/val3 ->        │ │
+│ │             /node1/node2/val2 -> /node1'+12                              │ │
 │ │      node = PurePosixPath('/node1/node2/val3')                           │ │
 │ │      self = <powerconf.rendering.ConfigRenderer object at                │ │
-│ │             0x71861e7bb3b0>                                              │ │
+│ │             0x7b0b35ea1670>                                              │ │
 │ │         v = PurePosixPath('val2')                                        │ │
 │ │ variables = [PurePosixPath('val2')]                                      │ │
 │ ╰──────────────────────────────────────────────────────────────────────────╯ │
 ╰──────────────────────────────────────────────────────────────────────────────╯
-RuntimeError: Circular dependencies detected.(/node1/node2/val2 -> 
-/node1/node2/val1 -> /node1/node2/val3)
+RuntimeError: Circular dependencies detected.(/node1/node2/val3 -> 
+/node1/node2/val2 -> /node1/node2/val1)
 
 ```
 

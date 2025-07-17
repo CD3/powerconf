@@ -21,7 +21,7 @@ def main():
                     level = m.group(1).strip()
                     title = m.group(2).strip()
                     anchor = title_to_anchor(title)
-                    prefix = level.replace("#", " ")
+                    prefix = level.replace("#", "  ")
                     print(f"{prefix}- [{title}]({anchor})")
 
 
