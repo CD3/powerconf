@@ -11,7 +11,7 @@ Powerful configuration tools for numerical models.
 <!-- }}} -->
 
 <!-- {{{ -->
-<!-- table_of_contents = textwrap.dedent(check_output('pandoc -s --toc -f markdown -t markdown -o /dev/stdout README.md.cd | sed -n "2,/# powerconf/ s/{#.*}.*$//p"',shell=True).decode().strip()) -->
+<!-- table_of_contents = check_output('python ./scripts/generate-markdown-toc.py README.md.cd',shell=True).decode() -->
 <!-- }}} -->
 
 {{table_of_contents}}
