@@ -3,12 +3,13 @@
 <!-- {{{ -->
 <!-- from pathlib import * -->
 <!-- import os -->
+<!-- import textwrap -->
 <!-- from subprocess import check_output -->
 <!-- from tempfile import NamedTemporaryFile, TemporaryDirectory -->
 <!-- }}} -->
 
 <!-- {{{ -->
-<!-- table_of_contents = check_output('pandoc -s --toc -f markdown -t markdown -o /dev/stdout README.md.cd | sed -n "/#toc-powerconf/,/# powerconf/p" | tail -n+2 | head -n-2',shell=True).decode() -->
+<!-- table_of_contents = textwrap.dedent(check_output('pandoc -s --toc -f markdown -t markdown -o /dev/stdout README.md.cd | sed -n "/#toc-powerconf/,/# powerconf/p" | tail -n+2 | head -n-2',shell=True).decode().strip()) -->
 <!-- }}} -->
 
 {{table_of_contents}}
