@@ -40,3 +40,6 @@ packages = ["src/powerconf"]
 [tool.pytest.ini_options]
 addopts = "-m 'not benchmark'"
 markers = [ "benchmark: marks tests that are benchmarks (and take a while to run)." ]
+
+[tool.ruff]
+exclude = ["tests/cram/"]
