@@ -7,7 +7,7 @@ from powerconf.cli import app
 
 from .unit_test_utils import working_directory
 
-runner = CliRunner(mix_stderr=False)
+runner = CliRunner()
 
 
 def test_command_helps():
@@ -38,14 +38,18 @@ powerconf-run:
 
         P("CONFIG.yml").write_text(config_text)
 
-        result = runner.invoke(app, ["run", "missing", "CONFIG.yml"])
+        result = runner.invoke(
+            app, ["run", "missing", "CONFIG.yml"], env={"SHELL": "bash"}
+        )
 
         assert result.exit_code == 1
         assert "'powerconf-run/missing'" in result.stderr
         assert "key in config instance" in result.stderr
         assert "0" in result.stderr
 
-        result = runner.invoke(app, ["run", "acme", "CONFIG.yml"], env={"TERM": "dumb"})
+        result = runner.invoke(
+            app, ["run", "acme", "CONFIG.yml"], env={"TERM": "dumb", "SHELL": "bash"}
+        )
 
         if result.exit_code != 0:
             print("STDOUT:", result.stdout)

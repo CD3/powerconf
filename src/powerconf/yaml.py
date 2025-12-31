@@ -2,7 +2,6 @@ import inspect
 import itertools
 import pathlib
 import textwrap
-import time
 from types import FunctionType
 from typing import List
 
@@ -10,7 +9,6 @@ from fspathtree import fspathtree
 
 from . import loaders, rendering, utils
 from .parallel_processing import BatchJobController, mkmsg
-from .pyyaml import dump, safe_load
 
 
 def _get_function_name(src):

@@ -42,8 +42,8 @@ class BatchJobController:
       return results
     
     def stop(self):
-      for l in self.links:
-          l.send("stop")
+      for link in self.links:
+          link.send("stop")
 
     def wait(self):
       for p in self.procs:

@@ -10,16 +10,16 @@ import tempfile
 from pathlib import Path
 from typing import Annotated
 
-import rich
 import typer
 from fspathtree import fspathtree
+from rich.console import Console
 
 from . import rendering, utils, validation, yaml
 
 app = typer.Typer()
 
-console = rich.console.Console()
-error_console = rich.console.Console(stderr=True)
+console = Console()
+error_console = Console(stderr=True)
 
 __version__ = importlib.metadata.version("powerconf")
 state = {"verbose": 0}
@@ -219,7 +219,6 @@ def setup_config_run(config, tool):
     start_directory = Path().absolute()
     working_directory = Path(tool_config.get("working_directory", ".")).absolute()
     with utils.working_directory(working_directory):
-
         if template_config_file is not None:
             if not rendered_config_file.parent.exists():
                 rendered_config_file.parent.mkdir(exist_ok=True, parents=True)
@@ -359,7 +358,7 @@ configs = powerconf.yaml.powerload('config.yml')
 
         pathlib.Path("test_config.py").write_text("\n".join(test_lines))
 
-        result = pytest.main(["test_config.py"])
+        pytest.main(["test_config.py"])
 
     os.chdir(top_dir)
 
@@ -374,7 +373,6 @@ def validate(
         Path, typer.Argument(help="File validation functions.")
     ] = "powerconf_validate.py",
 ):
-
     if not config_file.exists():
         raise typer.Exit(f"File '{config_file}' not found.")
     if not validate_file.exists():
