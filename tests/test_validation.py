@@ -24,14 +24,14 @@ def max_greater_than_min(config):
     assert config['/grid/y/max'] > config['/grid/y/min'], '/grid/y/max must be greater than /grid/y/min'
     """
 
-    config_file = pathlib.Path("CONFIG.yml")
+    config_file = tmp_path / "CONFIG.yml"
     config_file.write_text(config_text)
-    validation_file = pathlib.Path("powerconf_validate.py")
+    validation_file = tmp_path / "powerconf_validate.py"
     validation_file.write_text(validation_text)
 
     configs = yaml.powerload(config_file)
 
-    results = validation.validate_config(configs[0])
+    results = validation.validate_config(configs[0], validation_file)
 
     assert len(results) == 1
     assert "max_greater_than_min" in results

@@ -51,7 +51,7 @@ laser:
                 - 2
                 - 4
 """
-    config_file = pathlib.Path("CONFIG.yml")
+    config_file = tmp_path / "CONFIG.yml"
     config_file.write_text(text)
 
     configs = yaml.powerload(config_file)
@@ -62,7 +62,7 @@ laser:
     assert configs[0]["/laser/pulse/N"] == 1
     assert configs[0]["/laser/profile/R"].to("cm").magnitude == pytest.approx(10e-4 / 2)
 
-    configs = yaml.powerload("CONFIG.yml")
+    configs = yaml.powerload(config_file)
 
     assert len(configs) == 21
 
@@ -103,11 +103,12 @@ laser:
 import time
 
     """
+    orig_path = os.getcwd()
     os.chdir(tmp_path)
 
-    config_file = pathlib.Path("CONFIG.yml")
+    config_file = tmp_path / "CONFIG.yml"
     config_file.write_text(text)
-    extensions_file = pathlib.Path("powerconf_extensions.py")
+    extensions_file = tmp_path / "powerconf_extensions.py"
     extensions_file.write_text(extensions)
 
     start = time.perf_counter_ns()
@@ -121,6 +122,7 @@ import time
     parallel_runtime = stop - start
 
     assert parallel_runtime < 0.75 * serial_runtime
+    os.chdir(orig_path)
 
 def test_yaml_powerload_with_transform(tmp_path):
     text = """
@@ -137,9 +139,7 @@ grid:
         max: 1 cm
         N: $( ($max-$min)/${res} + 1)
 """
-    os.chdir(tmp_path)
-
-    config_file = pathlib.Path("CONFIG.yml")
+    config_file = tmp_path / "CONFIG.yml"
     config_file.write_text(text)
 
     configs = yaml.powerload(config_file)

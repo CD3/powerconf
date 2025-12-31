@@ -36,10 +36,11 @@ powerconf-run:
             - echo "HI FROM TOOL"
     """
 
-        P("CONFIG.yml").write_text(config_text)
+        config_file = tmp_path / "CONFIG.yml"
+        config_file.write_text(config_text)
 
         result = runner.invoke(
-            app, ["run", "missing", "CONFIG.yml"], env={"SHELL": "bash"}
+            app, ["run", "missing", str(config_file)], env={"SHELL": "bash"}
         )
 
         assert result.exit_code == 1
@@ -48,7 +49,7 @@ powerconf-run:
         assert "0" in result.stderr
 
         result = runner.invoke(
-            app, ["run", "acme", "CONFIG.yml"], env={"TERM": "dumb", "SHELL": "bash"}
+            app, ["run", "acme", str(config_file)], env={"TERM": "dumb", "SHELL": "bash"}
         )
 
         if result.exit_code != 0:
@@ -74,10 +75,10 @@ powerconf-run:
             - touch OUTPUT-$(${/run}).txt
             - touch LOG-$(${/run}).txt
     """
+        config_file = tmp_path / "CONFIG.yml"
+        config_file.write_text(config_text)
 
-        P("CONFIG.yml").write_text(config_text)
-
-        result = runner.invoke(app, ["run", "acme", "CONFIG.yml"])
+        result = runner.invoke(app, ["run", "acme", str(config_file)])
 
         assert result.exit_code == 0
 
@@ -101,9 +102,10 @@ powerconf-run:
             - touch OUTPUT-$(${/run}).txt
             - touch LOG-$(${/run}).txt
     """
-        P("CONFIG.yml").write_text(config_text)
+        config_file = tmp_path / "CONFIG.yml"
+        config_file.write_text(config_text)
 
-        result = runner.invoke(app, ["run", "acme", "CONFIG.yml"])
+        result = runner.invoke(app, ["run", "acme", str(config_file)])
         assert result.exit_code == 2
         assert "Invalid configuration" in result.stderr
         assert (
@@ -123,9 +125,9 @@ powerconf-run:
             - touch OUTPUT-$(${/run}).txt
             - touch LOG-$(${/run}).txt
     """
-        P("CONFIG.yml").write_text(config_text)
+        config_file.write_text(config_text)
 
-        result = runner.invoke(app, ["run", "acme", "CONFIG.yml"])
+        result = runner.invoke(app, ["run", "acme", str(config_file)])
         assert result.exit_code == 2
         assert "Invalid configuration" in result.stderr
         assert (
@@ -146,18 +148,18 @@ powerconf-run:
             - touch OUTPUT-$(${/run}).txt
             - touch LOG-$(${/run}).txt
     """
-        P("CONFIG.yml").write_text(config_text)
+        config_file.write_text(config_text)
 
         template_config_text = """
 output = {{acme/simulation/output}}
 """
-        P("config-acme.txt.template").write_text(template_config_text)
+        (tmp_path / "config-acme.txt.template").write_text(template_config_text)
 
-        result = runner.invoke(app, ["run", "acme", "CONFIG.yml"])
+        result = runner.invoke(app, ["run", "acme", str(config_file)])
 
         assert result.exit_code == 0
 
-        print(list(P().glob("*")))
+        print(list(P().glob("* ")))
         assert P("config-acme.txt").exists()
         assert (
             P("config-acme.txt").read_text()
@@ -176,10 +178,11 @@ powerconf-run:
             - sleep 0.5
     """
 
-        P("CONFIG.yml").write_text(config_text)
+        config_file = tmp_path / "CONFIG.yml"
+        config_file.write_text(config_text)
 
         start = time.perf_counter()
-        result = runner.invoke(app, ["run", "acme", "CONFIG.yml"])
+        result = runner.invoke(app, ["run", "acme", str(config_file)])
         if result.exit_code != 0:
             print("STDOUT:", result.stdout)
             print("STDERR:", result.stderr)
@@ -196,10 +199,10 @@ powerconf-run:
             - sleep 1
     """
 
-        P("CONFIG.yml").write_text(config_text)
+        config_file.write_text(config_text)
 
         start = time.perf_counter()
-        result = runner.invoke(app, ["run", "acme", "CONFIG.yml"])
+        result = runner.invoke(app, ["run", "acme", str(config_file)])
         end = time.perf_counter()
         duration = end - start
         assert duration > 1
@@ -216,10 +219,10 @@ powerconf-run:
             - sleep 1
     """
 
-        P("CONFIG.yml").write_text(config_text)
+        config_file.write_text(config_text)
 
         start = time.perf_counter()
-        result = runner.invoke(app, ["run", "acme", "CONFIG.yml"])
+        result = runner.invoke(app, ["run", "acme", str(config_file)])
         assert result.exit_code == 0
         end = time.perf_counter()
         duration = end - start
@@ -227,3 +230,7 @@ powerconf-run:
         # so the run time should be the same for two as it is for one.
         assert duration > 1
         assert duration < 2
+
+def teardown_module(module):
+    if P("CONFIG.yml").exists():
+        P("CONFIG.yml").unlink()

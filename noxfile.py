@@ -11,5 +11,5 @@ nox.options.sessions = ("tests",)
 def tests(session: nox.Session) -> None:
     """Run the test suite."""
     session.install("uv")
-    session.run("uv", "pip", "install", "-e", ".", "--group", "dev")
+    session.run("uv", "pip", "install", "-e", ".[dev]")
     session.run("pytest", *session.posargs)

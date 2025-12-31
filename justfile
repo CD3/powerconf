@@ -2,9 +2,7 @@ set positional-arguments
 
 
 test *args:
-  #! /bin/bash
-  export SHELL=/bin/bash
-  uv run pytest "$@"
+  uv run nox "$@"
 
 
 make-readme:

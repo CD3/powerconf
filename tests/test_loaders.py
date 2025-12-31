@@ -19,8 +19,9 @@ def test_yaml_loader(tmp_path):
         one: 1
         two: 2
         """
-        pathlib.Path("CONFIG.yml").write_text(text)
-        config = loaders.yaml(pathlib.Path("CONFIG.yml"))
+        config_file = tmp_path / "CONFIG.yml"
+        config_file.write_text(text)
+        config = loaders.yaml(config_file)
         assert type(config) is fspathtree.fspathtree
         assert "one" in config
         assert "two" in config
