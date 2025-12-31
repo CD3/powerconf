@@ -14,4 +14,4 @@ publish:
   uv publish
 
 lint:
-  uv run ruff check .
+  uv run ruff check . --fix

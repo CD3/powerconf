@@ -1,5 +1,4 @@
 import os
-import pathlib
 
 from powerconf import validation, yaml
 
