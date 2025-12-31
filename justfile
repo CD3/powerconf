@@ -14,3 +14,6 @@ publish:
   rm dist -rf
   uv build
   uv publish
+
+lint:
+  uv run ruff check .
