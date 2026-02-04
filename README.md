@@ -64,6 +64,18 @@ Install with pip
 $ pip install powerconf
 ```
 
+or `pipx`
+
+```bash
+$ pipx install powerconf
+```
+
+or, my favorite, `uv`
+
+```bash
+$ uv tool install powerconf
+```
+
 
 ## Motivation
 
