@@ -49,7 +49,9 @@ powerconf-run:
         assert "0" in result.stderr
 
         result = runner.invoke(
-            app, ["run", "acme", str(config_file)], env={"TERM": "dumb", "SHELL": "bash"}
+            app,
+            ["run", "acme", str(config_file)],
+            env={"TERM": "dumb", "SHELL": "bash"},
         )
 
         if result.exit_code != 0:
@@ -230,6 +232,29 @@ powerconf-run:
         # so the run time should be the same for two as it is for one.
         assert duration > 1
         assert duration < 2
+
+
+def test_report_command(tmp_path):
+    config_text = """
+num:
+    '@batch':
+      - 1
+      - 2
+powerconf-report:
+    columns:
+     - title: 'num'
+       value: $(${/num})
+    """
+    config_file = tmp_path / "CONFIG.yml"
+    config_file.write_text(config_text)
+
+    result = runner.invoke(app, ["report", str(config_file), "report.txt"])
+    assert result.exit_code == 0
+    assert P("report.txt").exists()
+    report_text = P("report.txt").read_text()
+
+    assert report_text == "num\n1\n2\n"
+
 
 def teardown_module(module):
     if P("CONFIG.yml").exists():

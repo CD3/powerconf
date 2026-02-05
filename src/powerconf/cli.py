@@ -389,3 +389,444 @@ def validate(
                 error_console.print(f"  {fname}: [red]Failed[/red]")
                 e = validation_results[fname]["exception"]
                 error_console.print(f"    Error: {e}")
+
+
+@app.command()
+def report(
+    config_file: Path,
+    output_file: Annotated[
+        Path, typer.Argument(help="File to write report to.")
+    ] = Path("/dev/stdout"),
+    format: Annotated[
+        str, typer.Argument(help="Report format. Currently only 'txt' is supported.")
+    ] = "txt",
+):
+    """
+    Read a powerconf-enabled configuration file and write a report file (table of config values).
+
+    This is useful when you have multiple configurations (i.e. batch configs) and want to correlate
+    some output data to the inputs.
+    """
+    configs = yaml.powerload(config_file, njobs=njobs)
+
+    if len(configs) == 1:
+        # configuration expands into a single instance
+        if output == template_file:
+            raise RuntimeError(
+                "Output file and template file are the same. This would overwrite the template file."
+            )
+        output.parent.mkdir(exist_ok=True, parents=True)
+        rendering.render_mustache_template_file(template_file, configs[0], output)
+    else:
+        output.mkdir(exist_ok=True, parents=True)
+        for config in configs:
+            _id = utils.get_id(config)
+            output_file_suffix = template_file.suffix
+            output_file_basename = template_file.with_suffix("")
+            if template_file.suffix in [".template", ".tpl"]:
+                output_file_suffix = output_file_basename.suffix
+                output_file_basename = output_file_basename.with_suffix("")
+            output_filename = output_file_basename.name + "-" + _id + output_file_suffix
+            rendering.render_mustache_template_file(
+                template_file, config, output / output_filename
+            )
+
+
+@app.command()
+def generate(
+    config_file: Path,
+    output: Path,
+    output_format: Annotated[
+        str, typer.Option("-f", "--format", help="Output format")
+    ] = "yaml",
+    node: Annotated[
+        str,
+        typer.Option(
+            "-n",
+            "--node",
+            help="Select a node in the configuration tree. All nodes below the selected nod will be written to output as if they are in the root of a configuration tree.",
+        ),
+    ] = "/",
+    njobs: Annotated[
+        int,
+        typer.Option(
+            "-j", "--jobs", help="Parallelize processing of multiple config instances."
+        ),
+    ] = 1,
+):
+    """
+    Read a powerconf-enabled configuration file and write a generated configuration file.
+
+    This command is useful for writing configuration files for non-powerconf enbabled tools that read
+    tree-like configuration files in some common formats. You can create nodes for each
+    of these tools in a single powerconf config file and then write them to separate
+    config files in different formats (yaml, json, etc).
+    """
+    configs = yaml.powerload(config_file, njobs=njobs)
+
+    def write(config, output: Path):
+        fmt = output_format.lower()
+        supported_formats = ["yml", "yaml", "json"]
+        if fmt not in supported_formats:
+            error_console.print(f"Unsupported output format {output_format}.")
+            error_console.print(f"Please choose one of {', '.join(supported_formats)}")
+            raise typer.Exit(1)
+
+        with output.open("w") as f:
+            if output_format.lower() in ["yaml", "yml"]:
+                yaml.dump(config.tree, f)
+                return
+            if output_format.lower() in ["json"]:
+                json.dump(config.tree, f)
+                return
+
+    for config in configs:
+        if node not in configs[0]:
+            error_console.print(f"Node '{node}' not found in configuration tree.")
+            raise typer.Exit(1)
+        if len(configs) == 1:
+            write(config[node], output)
+        else:
+            if output.exists() and not output.is_dir():
+                error_console.print(
+                    f"Multiple config instances generated need to be written to a directory. Output '{output}' already exists but is not a directory."
+                )
+                raise typer.Exit(2)
+            else:
+                output.mkdir(exist_ok=True, parents=True)
+
+            _id = utils.get_id(config)
+            output_file_suffix = output.suffix
+            output_file_basename = output.with_suffix("")
+            output_filename = output_file_basename.name + "-" + _id + output_file_suffix
+            write(config[node], output / output_filename)
+
+
+@app.command()
+def print_instances(
+    config_file: Path,
+    njobs: Annotated[
+        int,
+        typer.Option(
+            "-j", "--jobs", help="Parallelize processing of multiple config instances."
+        ),
+    ] = 1,
+):
+    """
+    Print instances of configuration trees generated from the config.
+    """
+    configs = yaml.powerload(config_file, njobs=njobs)
+    configs = utils.apply_transform(
+        configs, lambda p, n: str(n), lambda p, n: hasattr(n, "magnitude")
+    )
+    console.print("\n---\n".join(map(lambda c: yaml.dump(c.tree), configs)))
+
+
+def run_job(script):
+    with console.capture() as capture:
+        console.print(f"Running: {script.absolute()}")
+        result = subprocess.run(
+            [script.absolute()], stderr=subprocess.STDOUT, stdout=subprocess.PIPE
+        )
+        console.print("Finished")
+        console.print(f"Return Code: {result.returncode}")
+        console.print("Output")
+        console.print("vvvvvvvvvvvvvvvvvvvvvvvv")
+        console.print(result.stdout.decode())
+        console.print("^^^^^^^^^^^^^^^^^^^^^^^^")
+        console.print()
+    return capture.get()
+
+
+def setup_config_run(config, tool):
+    tool_config = config[f"/powerconf-run/{tool}"]
+
+    template_config_file = tool_config.get("template_config_file", None)
+    rendered_config_file = tool_config.get("rendered_config_file", None)
+
+    if template_config_file is not None:
+        template_config_file = Path(template_config_file).absolute()
+    if rendered_config_file is not None:
+        rendered_config_file = Path(rendered_config_file)
+
+    start_directory = Path().absolute()
+    working_directory = Path(tool_config.get("working_directory", ".")).absolute()
+    with utils.working_directory(working_directory):
+        if template_config_file is not None:
+            if not rendered_config_file.parent.exists():
+                rendered_config_file.parent.mkdir(exist_ok=True, parents=True)
+            rendering.render_mustache_template_file(
+                template_config_file, config, rendered_config_file
+            )
+
+        if rendered_config_file is not None:
+            tag = rendered_config_file.stem
+        else:
+            tag = utils.get_id(config)
+        script_file = Path(f"RUN-{tool}-{tag}.sh")
+        script_lines = []
+        shell = tool_config.get("shell", os.environ.get("SHELL", "sh"))
+        shell = shutil.which(shell)
+        if shell is None:
+            raise RuntimeError("Could not find shell to run the run script.")
+
+        script_lines.append(f"#! {shell}")
+        script_lines.append(f"cd {working_directory.absolute()}")
+        cwd = working_directory
+        for command in tool_config["command"]:
+            wd = working_directory
+            cmd = command
+            if hasattr(command, "tree"):
+                cmd = command["command"]
+                wd = Path(command.get("working_directory", ".")).absolute()
+
+            if wd != cwd:
+                script_lines.append(f"mkdir -p {wd}")
+                script_lines.append(f"cd {wd}")
+                cwd = wd
+            script_lines.append(cmd)
+
+        script_file.write_text("\n".join(script_lines))
+        # make executable
+        os.chmod(script_file, os.stat(script_file).st_mode | stat.S_IEXEC)
+
+    return (working_directory / script_file).relative_to(start_directory)
+
+
+@app.command()
+def run(
+    tool: Annotated[str, typer.Argument(help="The tool (i.e. model) to run.")],
+    config_file: Annotated[
+        pathlib.Path,
+        typer.Argument(
+            help="Confuration file. Includes model configuration and configuration for `powerconf run`."
+        ),
+    ],
+    dry_run: Annotated[
+        bool,
+        typer.Option("--dry-run", "-n", help="Don't run jobs, just set them up."),
+    ] = False,
+    njobs: Annotated[
+        int,
+        typer.Option(
+            "-j", "--jobs", help="Parallelize processing of multiple config instances."
+        ),
+    ] = 1,
+):
+    configs = yaml.powerload(config_file, njobs=njobs)
+    # check that all configs have a section for the given tool.
+    for i, config in enumerate(configs):
+        if f"/powerconf-run/{tool}" not in config:
+            error_console.print(
+                f"No 'powerconf-run/{tool}' key in config instance {i} of {config_file}. If you run `powerconf print-instance {config_file}`, each instance should have a `powerconf-run/{tool}` branch."
+            )
+            raise typer.Exit(code=1)
+        if (
+            f"/powerconf-run/{tool}/rendered_config_file" in config
+            and f"/powerconf-run/{tool}/template_config_file" not in config
+        ):
+            error_console.print(
+                f"Invalid configuration. `powerconf-run/{tool}/rendered_config_file` was found but `powerconf-run/{tool}/template_config_file` was not. If one is given, both must be given."
+            )
+            raise typer.Exit(code=2)
+
+        if (
+            f"/powerconf-run/{tool}/template_config_file" in config
+            and f"/powerconf-run/{tool}/rendered_config_file" not in config
+        ):
+            error_console.print(
+                f"Invalid configuration. `powerconf-run/{tool}/template_config_file` was found but `powerconf-run/{tool}/rendered_config_file` was not. If one is given, both must be given."
+            )
+            raise typer.Exit(code=2)
+
+    console.print("Setting up jobs...")
+    run_scripts = []
+    for config in configs:
+        run_script = setup_config_run(config, tool)
+        run_scripts.append(run_script)
+
+    console.print("Job scripts written to:")
+    for script in run_scripts:
+        console.print("  ", script)
+    console.print()
+    console.print()
+
+    if dry_run:
+        raise typer.Exit(code=0)
+
+    console.print("Running job scripts in parallel")
+    with multiprocessing.Pool() as pool:
+        for output in pool.map(run_job, run_scripts):
+            print(output)  # already formatted by rich
+            console.print()
+
+
+@app.command()
+def test(
+    config_file: Annotated[
+        pathlib.Path,
+        typer.Argument(help="Config file to process."),
+    ],
+    tests_file: Annotated[Path, typer.Argument(help="File containing tests.")],
+):
+    """Run some unit tests against the configuration instances produced by a config."""
+    import pytest
+
+    config_file = config_file.absolute()
+    tests_file = tests_file.absolute()
+    top_dir = pathlib.Path(os.getcwd())
+    with tempfile.TemporaryDirectory() as tdir:
+        os.chdir(tdir)
+        pathlib.Path("config.yml").write_text(config_file.read_text())
+
+        test_lines = []
+        test_lines.append(
+            r"""
+import powerconf.yaml
+from fspathtree import fspathtree
+configs = powerconf.yaml.powerload('config.yml')
+"""
+        )
+        test_lines += tests_file.read_text().split("\n")
+
+        pathlib.Path("test_config.py").write_text("\n".join(test_lines))
+
+        pytest.main(["test_config.py"])
+
+    os.chdir(top_dir)
+
+
+@app.command()
+def validate(
+    config_file: Annotated[
+        pathlib.Path,
+        typer.Argument(help="Config file to process."),
+    ],
+    validate_file: Annotated[
+        Path, typer.Argument(help="File validation functions.")
+    ] = "powerconf_validate.py",
+):
+    if not config_file.exists():
+        raise typer.Exit(f"File '{config_file}' not found.")
+    if not validate_file.exists():
+        raise typer.Exit(f"File '{validate_file}' not found.")
+
+    configs = yaml.powerload(config_file, njobs=multiprocessing.cpu_count())
+    for i, config in enumerate(configs):
+        console.print(f"Validating config instance {i}")
+        validation_results = validation.validate_config(config, validate_file)
+        for fname in validation_results:
+            if validation_results[fname]["result"] == "pass":
+                console.print(f"{fname}: [green]Passed[/green]")
+            else:
+                error_console.print(f"  {fname}: [red]Failed[/red]")
+                e = validation_results[fname]["exception"]
+                error_console.print(f"    Error: {e}")
+
+
+@app.command()
+def report(
+    config_file: Path,
+    output_file: Annotated[
+        Path, typer.Argument(help="File to write report to.")
+    ] = Path("/dev/stdout"),
+    format: Annotated[
+        str, typer.Argument(help="Report format. Currently only 'txt' is supported.")
+    ] = "txt",
+):
+    """
+    Generate a report (table of config values) from a
+    """
+    iconsole = Console(stderr=False)
+    econsole = Console(stderr=True)
+    iconsole.print("Loading configuration(s)")
+    try:
+        configs = yaml.powerload(config_file, njobs=multiprocessing.cpu_count())
+    except KeyError as e:
+        econsole.print(
+            "[red]A configuration parameter references another non-existent parameter.[/red]"
+        )
+
+        econsole.print("\n\n[red]" + str(e) + "[/red]\n\n")
+        raise typer.Exit(1)
+    iconsole.print("done.")
+
+    rows = []
+    rows.append(
+        list(
+            map(
+                lambda n: (
+                    n["title"]
+                    if "unit" not in n
+                    else n["title"] + " [" + n["unit"] + "]"
+                ),
+                configs[0]["/powerconf-report/columns"],
+            )
+        )
+    )
+    for config in configs:
+        row = []
+        for i in range(len(rows[0])):
+            v = config[f"/powerconf-report/columns/{i}/value"]
+            if v is None:
+                v = "--"
+            elif "unit" in config[f"/powerconf-report/columns/{i}"]:
+                v.ito(config[f"/powerconf-report/columns/{i}/unit"])
+                v = str(v.magnitude)
+            else:
+                v = str(v)
+            row.append(v)
+        rows.append(row)
+
+    if format == "txt":
+        with output_file.open("w") as f:
+            for row in rows:
+                f.write("|".join(row))
+                f.write("\n")
+    """
+    iconsole = Console(stderr=False)
+    econsole = Console(stderr=True)
+    iconsole.print("Loading configuration(s)")
+    try:
+        configs = yaml.powerload(config_file, njobs=multiprocessing.cpu_count())
+    except KeyError as e:
+        econsole.print(
+            "[red]A configuration parameter references another non-existent parameter.[/red]"
+        )
+
+        econsole.print("\n\n[red]" + str(e) + "[/red]\n\n")
+        raise typer.Exit(1)
+    iconsole.print("done.")
+
+    rows = []
+    rows.append(
+        list(
+            map(
+                lambda n: (
+                    n["title"]
+                    if "unit" not in n
+                    else n["title"] + " [" + n["unit"] + "]"
+                ),
+                configs[0]["/powerconf-report/columns"],
+            )
+        )
+    )
+    for config in configs:
+        row = []
+        for i in range(len(rows[0])):
+            v = config[f"/powerconf-report/columns/{i}/value"]
+            if v is None:
+                v = "--"
+            elif "unit" in config[f"/powerconf-report/columns/{i}"]:
+                v.ito(config[f"/powerconf-report/columns/{i}/unit"])
+                v = str(v.magnitude)
+            else:
+                v = str(v)
+            row.append(v)
+        rows.append(row)
+
+    if format == "txt":
+        with output_file.open("w") as f:
+            for row in rows:
+                f.write("|".join(row))
+                f.write("\n")
