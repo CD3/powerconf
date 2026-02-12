@@ -139,13 +139,43 @@ def load_includes(config: fspathtree, loader):
     @param config: the configuration tree to expand. If the tree does not include any '@include' leafs, it will not be changes.
     @param loader: a function that accepts a pathlib.Path argument and loads the contents of the file into an fspathtree that is returned.
     """
-    for leaf in config.get_all_leaf_node_paths(
-        predicate=lambda p, n: p.name == "@include"
-    ):
-        subtree = loader(Path(config[leaf]))
-        subtree = load_includes(subtree, loader)
-        config[leaf.parent] = subtree.tree
+    # handle @include's at the root level first.
+    leaf = "/@include"
+    if leaf in config:
+        if type(config[leaf]) is str:
+            subtree = loader(Path(config[leaf]))
+            subtree = load_includes(subtree, loader)
+        elif type(config[leaf]) == fspathtree and type(config[leaf].tree) == list:
+            # load first include
+            subtree = loader(Path(config[leaf][0]))
+            # load others using update method
+            for i in range(1, len(config[leaf])):
+                subtree.update(loader(Path(config[leaf][i])))
+            subtree = load_includes(subtree, loader)
+        else:
+            raise RuntimeError(
+                "'@include' node value must be a string or a list of strings."
+            )
+        config.update(subtree)
 
+    for leaf in config.get_all_paths(
+        predicate=lambda p: len(p.parts) > 2 and p.name == "@include"
+    ):
+        if type(config[leaf]) == str:
+            subtree = loader(Path(config[leaf]))
+            subtree = load_includes(subtree, loader)
+        elif type(config[leaf]) == fspathtree and type(config[leaf].tree) == list:
+            # load first include
+            subtree = loader(Path(config[leaf][0]))
+            # load others using update method
+            for i in range(1, len(config[leaf])):
+                subtree.update(loader(Path(config[leaf][i])))
+            subtree = load_includes(subtree, loader)
+        else:
+            raise RuntimeError(
+                "'@include' node value must be a string or a list of strings."
+            )
+        config[leaf.parent] = subtree.tree
     return config
 
 
@@ -170,13 +200,18 @@ class ConfigRenderer:
         """Expand @batch nodes in a configuration tree into multiple configuration trees."""
         configs = []
 
-        batch_leaves = self._get_batch_leaves(config)
+        batch_leaves = list(
+            map(
+                lambda p: str(p.parent),
+                config.get_all_paths(predicate=lambda p: p.name == "@batch"),
+            )
+        )
 
         for vals in itertools.product(
-            *[config[leaf + "/@batch"] for leaf in batch_leaves.keys()]
+            *[config[leaf + "/@batch"] for leaf in batch_leaves]
         ):
             instance = copy.deepcopy(config)
-            for i, leaf in enumerate(batch_leaves.keys()):
+            for i, leaf in enumerate(batch_leaves):
                 instance[leaf] = vals[i]
             configs.append(instance)
 
@@ -390,19 +425,6 @@ class ConfigRenderer:
                 config[path] = expand_variables(config[path])
 
         return config
-
-    def _get_batch_leaves(self, config: fspathtree):
-        """
-        Return a list of keys in a fpathtree (nested dict/list) that are marked
-        as batch.
-        """
-        batch_leaves = dict()
-        for leaf in config.get_all_leaf_node_paths():
-            if leaf.parent.parts[-1] == "@batch":
-                batch_leaves[str(leaf.parent.parent)] = (
-                    batch_leaves.get(str(leaf.parent.parent), 0) + 1
-                )
-        return batch_leaves
 
 
 def render_mustache_template(template_text: str, ctx: fspathtree):

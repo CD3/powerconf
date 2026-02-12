@@ -17,11 +17,6 @@ def test_batch_expansion_single_node():
     config = fspathtree({"time": {"max": {"@batch": [1, 2, 3]}}})
     config_renderer = rendering.ConfigRenderer(expressions.ExecExpressionEvaluator())
 
-    tmp = config_renderer._get_batch_leaves(config)
-    assert len(tmp) == 1
-    assert "/time/max" in tmp
-    assert tmp["/time/max"] == 3
-
     configs = config_renderer.expand_batch_nodes(config)
     assert len(configs) == 3
     assert configs[0]["/time/max"] == 1
@@ -37,13 +32,6 @@ def test_batch_expansion_two_nodes():
         }
     )
     config_renderer = rendering.ConfigRenderer(expressions.ExecExpressionEvaluator())
-
-    tmp = config_renderer._get_batch_leaves(config)
-    assert len(tmp) == 2
-    assert "/time/max" in tmp
-    assert "/grid/x/max" in tmp
-    assert tmp["/time/max"] == 3
-    assert tmp["/grid/x/max"] == 2
 
     configs = config_renderer.expand_batch_nodes(config)
     assert len(configs) == 6
@@ -626,3 +614,185 @@ simulation:
 
     assert config["/simulation/output"] == "Tvst-2_inv_cm-100_um.txt"
     assert config["/simulation/id"] == "1c8c60bee71afc4f3143ef6edf3ca971"
+
+
+def test_include_lists_basic(tmp_path):
+    with unit_test_utils.working_directory(tmp_path):
+        text1 = """
+    simulation:
+        grid:
+            '@include' : 
+                  - x-grid.yml
+                  - y-grid.yml
+    """
+
+        text2 = """
+    x: 
+        min: 0 cm
+        max: 1 cm
+        N: 100
+    """
+        text3 = """
+    y: 
+        min: 1 cm
+        max: 3 cm
+        N: 200
+        """
+
+        pathlib.Path("x-grid.yml").write_text(text2)
+        pathlib.Path("y-grid.yml").write_text(text3)
+
+        config = loaders.yaml(text1)
+        config = rendering.load_includes(config, loaders.yaml)
+        # print(config.tree)
+
+        assert "simulation/grid/x/min" in config
+        assert "simulation/grid/x/max" in config
+        assert "simulation/grid/x/N" in config
+        assert "simulation/grid/y/min" in config
+        assert "simulation/grid/y/max" in config
+        assert "simulation/grid/y/N" in config
+
+        assert config["simulation/grid/x/min"] == "0 cm"
+        assert config["simulation/grid/x/max"] == "1 cm"
+        assert config["simulation/grid/x/N"] == 100
+        assert config["simulation/grid/y/min"] == "1 cm"
+        assert config["simulation/grid/y/max"] == "3 cm"
+        assert config["simulation/grid/y/N"] == 200
+
+
+def test_include_lists_with_override(tmp_path):
+    with unit_test_utils.working_directory(tmp_path):
+        text1 = """
+    simulation:
+        grid:
+            '@include' : 
+                  - x-grid.yml
+                  - y-grid.yml
+    """
+
+        text2 = """
+    x: 
+        min: 0 cm
+        max: 1 cm
+        N: 100
+    """
+        text3 = """
+    x: 
+        min: 0.5 cm
+    y: 
+        min: 1 cm
+        max: 3 cm
+        N: 200
+        """
+
+        pathlib.Path("x-grid.yml").write_text(text2)
+        pathlib.Path("y-grid.yml").write_text(text3)
+
+        config = loaders.yaml(text1)
+        config = rendering.load_includes(config, loaders.yaml)
+        # print(config.tree)
+
+        assert "simulation/grid/x/min" in config
+        assert "simulation/grid/x/max" in config
+        assert "simulation/grid/x/N" in config
+        assert "simulation/grid/y/min" in config
+        assert "simulation/grid/y/max" in config
+        assert "simulation/grid/y/N" in config
+
+        assert config["simulation/grid/x/min"] == "0.5 cm"
+        assert config["simulation/grid/x/max"] == "1 cm"
+        assert config["simulation/grid/x/N"] == 100
+        assert config["simulation/grid/y/min"] == "1 cm"
+        assert config["simulation/grid/y/max"] == "3 cm"
+        assert config["simulation/grid/y/N"] == 200
+
+
+def test_include_at_root(tmp_path):
+    with unit_test_utils.working_directory(tmp_path):
+        text1 = """
+    '@include': 'thermal.yml'
+    simulation:
+        grid:
+          x:
+            min: 0 cm
+            max: 1 cm
+            N: 100
+    """
+
+        text2 = """
+    thermal: 
+        rho: 1
+        c: 2
+        k: 3
+    """
+
+        pathlib.Path("thermal.yml").write_text(text2)
+
+        config = loaders.yaml(text1)
+        config = rendering.load_includes(config, loaders.yaml)
+
+        assert "simulation/grid/x/min" in config
+        assert "simulation/grid/x/max" in config
+        assert "simulation/grid/x/N" in config
+        assert "thermal/rho" in config
+        assert "thermal/c" in config
+        assert "thermal/k" in config
+
+        assert config["simulation/grid/x/min"] == "0 cm"
+        assert config["simulation/grid/x/max"] == "1 cm"
+        assert config["simulation/grid/x/N"] == 100
+        assert config["thermal/rho"] == 1
+        assert config["thermal/c"] == 2
+        assert config["thermal/k"] == 3
+
+
+def test_include_at_root_with_list(tmp_path):
+    with unit_test_utils.working_directory(tmp_path):
+        text1 = """
+    '@include':
+      - 'thermal.yml'
+      - 'optical.yml'
+    simulation:
+        grid:
+          x:
+            min: 0 cm
+            max: 1 cm
+            N: 100
+    """
+
+        text2 = """
+    thermal: 
+        rho: 1
+        c: 2
+        k: 3
+    """
+        text3 = """
+    optical: 
+        mu_a: 4
+        mu_s: 5
+    """
+
+        pathlib.Path("thermal.yml").write_text(text2)
+        pathlib.Path("optical.yml").write_text(text3)
+
+        config = loaders.yaml(text1)
+        config = rendering.load_includes(config, loaders.yaml)
+
+        assert "simulation/grid/x/min" in config
+        assert "simulation/grid/x/max" in config
+        assert "simulation/grid/x/N" in config
+        assert "thermal/rho" in config
+        assert "thermal/c" in config
+        assert "thermal/k" in config
+        assert "optical/mu_a" in config
+        assert "optical/mu_s" in config
+
+        assert config["simulation/grid/x/min"] == "0 cm"
+        assert config["simulation/grid/x/max"] == "1 cm"
+        assert config["simulation/grid/x/N"] == 100
+        assert config["thermal/rho"] == 1
+        assert config["thermal/c"] == 2
+        assert config["thermal/k"] == 3
+        assert config["optical/mu_a"] == 4
+        assert config["optical/mu_s"] == 5

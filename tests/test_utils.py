@@ -1,4 +1,5 @@
 import pint
+import yaml
 from fspathtree import fspathtree
 
 from powerconf import utils
@@ -72,3 +73,29 @@ def test_apply_transform_to_list_of_configs():
     assert configs[0]["N"] == 1
     assert configs[1]["x"] == "1 centimeter"
     assert configs[1]["N"] == 1
+
+
+def test_retrieving_nodes_with_name():
+    config = """
+    grid:
+      x:
+        min: 0
+        max: 1
+        N: 100
+      y:
+        min: 1
+        max: 3
+        N: 200
+    stretching:
+      x:
+       enabled: false
+      y:
+       enabled: true
+    """
+    config = fspathtree(yaml.safe_load(config))
+
+    paths = list(map(str, config.get_all_paths(predicate=lambda p, n: p.name == "x")))
+
+    assert len(paths) == 2
+    assert "/grid/x" in paths
+    assert "/stretching/x" in paths
