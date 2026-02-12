@@ -342,7 +342,7 @@ wheels = [
 
 [[package]]
 name = "powerconf"
-version = "0.7.0"
+version = "0.8.0"
 source = { editable = "." }
 dependencies = [
     { name = "fspathtree" },
@@ -369,14 +369,14 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "fspathtree", specifier = ">=1.0" },
+    { name = "fspathtree", specifier = ">=1" },
     { name = "networkx", specifier = ">=3.3" },
     { name = "numpy", marker = "extra == 'dev'", specifier = ">=2.1.2" },
     { name = "pint", specifier = ">=0.24.3" },
     { name = "pyparsing", specifier = ">=3.1.4" },
     { name = "pystache", specifier = ">=0.6.5" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.3.3" },
-    { name = "pytest-benchmark", marker = "extra == 'dev'", specifier = ">=4.0.0" },
+    { name = "pytest-benchmark", marker = "extra == 'dev'", specifier = ">=4" },
     { name = "pyyaml", specifier = ">=6.0.2" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.9.7" },
     { name = "tissue-properties", marker = "extra == 'dev'", specifier = ">=0.2.1" },

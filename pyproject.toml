@@ -1,47 +1,52 @@
+[build-system]
+build-backend = "hatchling.build"
+requires = [ "hatchling" ]
+
 [project]
 name = "powerconf"
-version = "0.7.0"
+version = "0.8.0"
 description = "Powerup you configuration files."
-dependencies = [
-    "pint>=0.24.3",
-    "fspathtree>=1.0",
-    "pyparsing>=3.1.4",
-    "networkx>=3.3",
-    "pystache>=0.6.5",
-    "typer>=0.12.5",
-    "pyyaml>=6.0.2",
-]
 readme = "README.md"
-requires-python = ">= 3.10"
+requires-python = ">=3.10"
 
-[project.scripts]
-"powerconf" = "powerconf.cli:app"
-
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
-[project.optional-dependencies]
-dev = [
-    "pytest>=8.3.3",
-    "numpy>=2.1.2",
-    "pytest-benchmark>=4.0.0",
-    "tissue-properties>=0.2.1",
-    "ruff>=0.9.7",
+classifiers = [
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
 ]
-
-[tool.uv]
-managed = true
+dependencies = [
+  "fspathtree>=1",
+  "networkx>=3.3",
+  "pint>=0.24.3",
+  "pyparsing>=3.1.4",
+  "pystache>=0.6.5",
+  "pyyaml>=6.0.2",
+  "typer>=0.12.5",
+]
+optional-dependencies.dev = [
+  "numpy>=2.1.2",
+  "pytest>=8.3.3",
+  "pytest-benchmark>=4",
+  "ruff>=0.9.7",
+  "tissue-properties>=0.2.1",
+]
+scripts."powerconf" = "powerconf.cli:app"
 
 [tool.hatch.metadata]
 allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/powerconf"]
+packages = [ "src/powerconf" ]
+
+[tool.uv]
+managed = true
+
+[tool.ruff]
+exclude = [ "tests/cram/" ]
 
 [tool.pytest.ini_options]
 addopts = "-m 'not benchmark'"
 markers = [ "benchmark: marks tests that are benchmarks (and take a while to run)." ]
-
-[tool.ruff]
-exclude = ["tests/cram/"]
