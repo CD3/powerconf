@@ -505,6 +505,97 @@ $ powerconf print-instances CONFIG.yaml
 ```
 ```
 
+### Including Configuration from Other Files
+
+PowerConf supports loading parts of the configuration tree from other files using the `@include` keyword.
+This is useful when you have common configuration that is shared between multiple configuration files,
+or when you want to keep your configuration files organized.
+
+<!-- {{{ -->
+<!-- grid_config = ''' -->
+<!-- min: 0 cm -->
+<!-- max: 1 cm -->
+<!-- N: 101 -->
+<!-- '''.strip() -->
+<!-- config = ''' -->
+<!-- simulation: -->
+<!--   grid: -->
+<!--     x: -->
+<!--       '@include': grid.yml -->
+<!--     y: -->
+<!--       '@include': grid.yml -->
+<!--   time: -->
+<!--     min: 0 s -->
+<!--     max: 1 s -->
+<!-- '''.strip() -->
+<!-- cur_dir = os.getcwd() -->
+<!-- with TemporaryDirectory() as temp_dir: -->
+<!--   os.chdir(temp_dir) -->
+<!--   pathlib.Path("grid.yml").write_text(grid_config) -->
+<!--   pathlib.Path("CONFIG.yaml").write_text(config) -->
+<!--   output = check_output(f'uv run powerconf print-instances CONFIG.yaml',shell=True).decode() -->
+<!-- os.chdir(cur_dir) -->
+<!-- }}} -->
+```bash
+$cat grid.yml
+{{grid_config}}
+$cat CONFIG.yaml
+{{config}}
+$ powerconf print-instances CONFIG.yaml
+{{output}}
+```
+
+Here, both `x` and `y` grids are loaded from the same `grid.yml` file. The `@include` node is replaced
+by the contents of the specified file. Like `@batch`, `@include` needs to be quoted so that the YAML parser
+treats it as a string.
+
+The included file can itself contain expressions and variable references. It can even contain `@include` nodes,
+allowing for nested includes.
+
+<!-- {{{ -->
+<!-- x_grid_config = ''' -->
+<!-- min: -1 cm -->
+<!-- max: 1 cm -->
+<!-- N: $( int((${max}-${min})/${../../res}) ) -->
+<!-- '''.strip() -->
+<!-- y_grid_config = ''' -->
+<!-- min: 0 cm -->
+<!-- max: 2 cm -->
+<!-- N: $( int((${max}-${min})/${../../res}) ) -->
+<!-- '''.strip() -->
+<!-- config2 = ''' -->
+<!-- simulation: -->
+<!--   res: 100 um -->
+<!--   grid: -->
+<!--     x: -->
+<!--       '@include': x-grid.yml -->
+<!--     y: -->
+<!--       '@include': y-grid.yml -->
+<!-- '''.strip() -->
+<!-- cur_dir = os.getcwd() -->
+<!-- with TemporaryDirectory() as temp_dir: -->
+<!--   os.chdir(temp_dir) -->
+<!--   pathlib.Path("x-grid.yml").write_text(x_grid_config) -->
+<!--   pathlib.Path("y-grid.yml").write_text(y_grid_config) -->
+<!--   pathlib.Path("CONFIG.yaml").write_text(config2) -->
+<!--   output2 = check_output(f'uv run powerconf print-instances CONFIG.yaml',shell=True).decode() -->
+<!-- os.chdir(cur_dir) -->
+<!-- }}} -->
+```bash
+$cat x-grid.yml
+{{x_grid_config}}
+$cat y-grid.yml
+{{y_grid_config}}
+$cat CONFIG.yaml
+{{config2}}
+$ powerconf print-instances CONFIG.yaml
+{{output2}}
+```
+
+In this example, the included files reference `${../../res}` which is a parameter in the parent configuration.
+Variable references in included files are resolved after the include is expanded, so they have access to the
+full configuration tree.
+
 ### Configuring external tools/simulations
 
 #### `powerconf generate`

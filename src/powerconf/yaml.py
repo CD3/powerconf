@@ -123,3 +123,9 @@ def powerload(
     config_renderer_server.stop()
     config_renderer_server.wait()
     return rendered_configs
+
+
+def dump(data, stream=None, **kwargs):
+    """Dump a configuration tree to YAML format."""
+    import yaml as _yaml
+    return _yaml.dump(data, stream, default_flow_style=False, **kwargs)

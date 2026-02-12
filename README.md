@@ -2,7 +2,17 @@
 
 Powerful configuration tools for numerical models.
 
+<!-- {{{ -->
+<!-- from pathlib import * -->
+<!-- import os -->
+<!-- import textwrap -->
+<!-- from subprocess import check_output -->
+<!-- from tempfile import NamedTemporaryFile, TemporaryDirectory -->
+<!-- }}} -->
 
+<!-- {{{ -->
+<!-- table_of_contents = check_output('python ./scripts/generate-markdown-toc.py README.md.cd',shell=True).decode() -->
+<!-- }}} -->
 
   - [powerconf](#powerconf)
     - [Install](#install)
@@ -12,6 +22,7 @@ Powerful configuration tools for numerical models.
       - [Variable Expansion](#variable-expansion)
       - [Units](#units)
       - [Batch Configurations](#batch-configurations)
+      - [Including Configuration from Other Files](#including-configuration-from-other-files)
       - [Configuring external tools/simulations](#configuring-external-tools/simulations)
         - [`powerconf generate`](#`powerconf-generate`)
         - [`powerconf render`](#`powerconf-render`)
@@ -143,6 +154,17 @@ powerconf consists of a Python module that you can use to load and/or render you
 
 Values of configuration parameters can contain Python expressions that will be evaluated to produce the parameter value. Expressions are identified with a `$(...)` (similar to common shells).
 
+<!-- {{{ -->
+<!-- config = ''' -->
+<!-- grid:        -->
+<!--  theta:      -->
+<!--    min: 0    -->
+<!--    max: $(2*math.pi)  -->
+<!-- '''.strip() -->
+<!-- config_file = pathlib.Path(NamedTemporaryFile().name) -->
+<!-- config_file.write_text(config) -->
+<!-- output = check_output(f'uv run powerconf print-instances {config_file}',shell=True).decode() -->
+<!-- }}} -->
 
 
 ```bash
@@ -162,6 +184,18 @@ grid:
 
 An expression can be embedded in surrounding text
 
+<!-- {{{ -->
+<!-- config = ''' -->
+<!-- grid:        -->
+<!--  theta:      -->
+<!--    min: 0    -->
+<!--    max: $(2*math.pi)  -->
+<!-- outfile: output-$(2*math.pi).txt  -->
+<!-- '''.strip() -->
+<!-- config_file = pathlib.Path(NamedTemporaryFile().name) -->
+<!-- config_file.write_text(config) -->
+<!-- output = check_output(f'uv run powerconf print-instances {config_file}',shell=True).decode() -->
+<!-- }}} -->
 
 
 ```bash
@@ -183,6 +217,18 @@ outfile: output-6.283185307179586.txt
 
 A parameter value can also contain multiple expressions
 
+<!-- {{{ -->
+<!-- config = ''' -->
+<!-- grid:        -->
+<!--  theta:      -->
+<!--    min: $(math.pi)    -->
+<!--    max: $(2*math.pi)  -->
+<!-- outfile: output-$(math.pi)_to_$(2*math.pi).txt  -->
+<!-- '''.strip() -->
+<!-- config_file = pathlib.Path(NamedTemporaryFile().name) -->
+<!-- config_file.write_text(config) -->
+<!-- output = check_output(f'uv run powerconf print-instances {config_file}',shell=True).decode() -->
+<!-- }}} -->
 
 
 ```bash
@@ -208,6 +254,18 @@ The real power of PowerConf is its ability to reference the value of other
 parameters inside an expression. Parameter values are identified with a `${...}`
 (again, similar to common shells).
 
+<!-- {{{ -->
+<!-- config = ''' -->
+<!-- grid:        -->
+<!--  x:      -->
+<!--    min: 0    -->
+<!--    max: 4  -->
+<!--    N: $( (${max} - ${min})/0.1 )  -->
+<!-- '''.strip() -->
+<!-- config_file = pathlib.Path(NamedTemporaryFile().name) -->
+<!-- config_file.write_text(config) -->
+<!-- output = check_output(f'uv run powerconf print-instances {config_file}',shell=True).decode() -->
+<!-- }}} -->
 
 
 ```bash
@@ -231,6 +289,19 @@ Here, the parameter `N` is computed from the values of `min` and `max`. We could
 even use an intermdiate parameter to specify the resolution.
 
 
+<!-- {{{ -->
+<!-- config = ''' -->
+<!-- grid:        -->
+<!--  x:      -->
+<!--    res: 0.1    -->
+<!--    min: 0    -->
+<!--    max: 4  -->
+<!--    N: $( (${max} - ${min})/${res} )  -->
+<!-- '''.strip() -->
+<!-- config_file = pathlib.Path(NamedTemporaryFile().name) -->
+<!-- config_file.write_text(config) -->
+<!-- output = check_output(f'uv run powerconf print-instances {config_file}',shell=True).decode() -->
+<!-- }}} -->
 
 
 ```bash
@@ -254,6 +325,18 @@ grid:
 
 Expressions can reference parameters who's values also contain expressions.
 
+<!-- {{{ -->
+<!-- config = ''' -->
+<!-- node1:        -->
+<!--  node2:      -->
+<!--    val1: 0.1    -->
+<!--    val2: $(${val1})    -->
+<!--    val3: $(${val2})  -->
+<!-- '''.strip() -->
+<!-- config_file = pathlib.Path(NamedTemporaryFile().name) -->
+<!-- config_file.write_text(config) -->
+<!-- output = check_output(f'uv run powerconf print-instances {config_file}',shell=True).decode() -->
+<!-- }}} -->
 
 ```bash
 $cat CONFIG.yaml
@@ -277,6 +360,18 @@ PowerConf will determine the correct order to evaluate the expressions in. It wi
 also detect circular dependencies and throw an error if it detects one.
 
 
+<!-- {{{ -->
+<!-- config = ''' -->
+<!-- node1:        -->
+<!--  node2:      -->
+<!--    val1: $(${val3})    -->
+<!--    val2: $(${val1})    -->
+<!--    val3: $(${val2})  -->
+<!-- '''.strip() -->
+<!-- config_file = pathlib.Path(NamedTemporaryFile().name) -->
+<!-- config_file.write_text(config) -->
+<!-- output = check_output(f'uv run powerconf print-instances {config_file} 2>&1 | cat',shell=True).decode() -->
+<!-- }}} -->
 ```bash
 $cat CONFIG.yaml
 node1:        
@@ -286,50 +381,50 @@ node1:
    val3: $(${val2})
 $ powerconf print-instances CONFIG.yaml
 ╭───────────────────── Traceback (most recent call last) ──────────────────────╮
-│ /home/cclark/Code/sync/projects/powerconf/src/powerconf/cli.py:185 in        │
+│ /home/cclark/Code/sync/projects/powerconf/src/powerconf/cli.py:518 in        │
 │ print_instances                                                              │
 │                                                                              │
-│   182 │   """                                                                │
-│   183 │   Print instances of configuration trees generated from the config.  │
-│   184 │   """                                                                │
-│ ❱ 185 │   configs = yaml.powerload(config_file, njobs=njobs)                 │
-│   186 │   configs = utils.apply_transform(                                   │
-│   187 │   │   configs, lambda p, n: str(n), lambda p, n: hasattr(n, "magnitu │
-│   188 │   )                                                                  │
+│   515 │   """                                                                │
+│   516 │   Print instances of configuration trees generated from the config.  │
+│   517 │   """                                                                │
+│ ❱ 518 │   configs = yaml.powerload(config_file, njobs=njobs)                 │
+│   519 │   configs = utils.apply_transform(                                   │
+│   520 │   │   configs, lambda p, n: str(n), lambda p, n: hasattr(n, "magnitu │
+│   521 │   )                                                                  │
 │                                                                              │
 │ ╭────────────────── locals ───────────────────╮                              │
-│ │ config_file = PosixPath('/tmp/tmpimf1mmgb') │                              │
+│ │ config_file = PosixPath('/tmp/tmplg5c4eup') │                              │
 │ │       njobs = 1                             │                              │
 │ ╰─────────────────────────────────────────────╯                              │
 │                                                                              │
-│ /home/cclark/Code/sync/projects/powerconf/src/powerconf/yaml.py:96 in        │
+│ /home/cclark/Code/sync/projects/powerconf/src/powerconf/yaml.py:94 in        │
 │ powerload                                                                    │
 │                                                                              │
-│    93 │   │   │   │   *list(map(config_renderer.expand_batch_nodes, complete │
-│    94 │   │   │   )                                                          │
-│    95 │   │   )                                                              │
-│ ❱  96 │   │   rendered_configs = list(map(config_renderer.render, unrendered │
-│    97 │   │   if transform is not None:                                      │
-│    98 │   │   │   utils.apply_transform(rendered_configs, transform)         │
-│    99 │   │   return rendered_configs                                        │
+│    91 │   │   │   │   *list(map(config_renderer.expand_batch_nodes, complete │
+│    92 │   │   │   )                                                          │
+│    93 │   │   )                                                              │
+│ ❱  94 │   │   rendered_configs = list(map(config_renderer.render, unrendered │
+│    95 │   │   if transform is not None:                                      │
+│    96 │   │   │   utils.apply_transform(rendered_configs, transform)         │
+│    97 │   │   return rendered_configs                                        │
 │                                                                              │
 │ ╭───────────────────────────────── locals ─────────────────────────────────╮ │
 │ │   complete_configs = [                                                   │ │
 │ │                      │   <fspathtree.fspathtree.fspathtree object at     │ │
-│ │                      0x76b860b48200>                                     │ │
+│ │                      0x7eee19471ac0>                                     │ │
 │ │                      ]                                                   │ │
 │ │        config_docs = [                                                   │ │
 │ │                      │   <fspathtree.fspathtree.fspathtree object at     │ │
-│ │                      0x76b860b48200>                                     │ │
+│ │                      0x7eee19471ac0>                                     │ │
 │ │                      ]                                                   │ │
-│ │        config_file = PosixPath('/tmp/tmpimf1mmgb')                       │ │
+│ │        config_file = PosixPath('/tmp/tmplg5c4eup')                       │ │
 │ │    config_renderer = <powerconf.rendering.ConfigRenderer object at       │ │
-│ │                      0x76b860994e90>                                     │ │
+│ │                      0x7eee184f5910>                                     │ │
 │ │              njobs = 1                                                   │ │
 │ │          transform = None                                                │ │
 │ │ unrendered_configs = [                                                   │ │
 │ │                      │   <fspathtree.fspathtree.fspathtree object at     │ │
-│ │                      0x76b860916660>                                     │ │
+│ │                      0x7eee1842b230>                                     │ │
 │ │                      ]                                                   │ │
 │ ╰──────────────────────────────────────────────────────────────────────────╯ │
 │                                                                              │
@@ -345,39 +440,62 @@ $ powerconf print-instances CONFIG.yaml
 │   214                                                                        │
 │                                                                              │
 │ ╭───────────────────────────────── locals ─────────────────────────────────╮ │
-│ │    config = <fspathtree.fspathtree.fspathtree object at 0x76b860916660>  │ │
+│ │    config = <fspathtree.fspathtree.fspathtree object at 0x7eee1842b230>  │ │
 │ │     cycle = [                                                            │ │
-│ │             │   PurePosixPath('/node1/node2/val3'),                      │ │
 │ │             │   PurePosixPath('/node1/node2/val2'),                      │ │
-│ │             │   PurePosixPath('/node1/node2/val1')                       │ │
+│ │             │   PurePosixPath('/node1/node2/val1'),                      │ │
+│ │             │   PurePosixPath('/node1/node2/val3')                       │ │
 │ │             ]                                                            │ │
 │ │    cycles = [                                                            │ │
 │ │             │   [                                                        │ │
-│ │             │   │   PurePosixPath('/node1/node2/val3'),                  │ │
 │ │             │   │   PurePosixPath('/node1/node2/val2'),                  │ │
-│ │             │   │   PurePosixPath('/node1/node2/val1')                   │ │
+│ │             │   │   PurePosixPath('/node1/node2/val1'),                  │ │
+│ │             │   │   PurePosixPath('/node1/node2/val3')                   │ │
 │ │             │   ]                                                        │ │
 │ │             ]                                                            │ │
 │ │       dep = PurePosixPath('/node1/node2/val2')                           │ │
-│ │         G = <networkx.classes.digraph.DiGraph object at 0x76b860a17770>  │ │
+│ │         G = <networkx.classes.digraph.DiGraph object at 0x7eee18572690>  │ │
 │ │ make_copy = True                                                         │ │
-│ │       msg = 'Circular dependencies detected.(/node1/node2/val3 ->        │ │
-│ │             /node1/node2/val2 -> /node1'+12                              │ │
+│ │       msg = 'Circular dependencies detected.(/node1/node2/val2 ->        │ │
+│ │             /node1/node2/val1 -> /node1'+12                              │ │
 │ │      node = PurePosixPath('/node1/node2/val3')                           │ │
 │ │      self = <powerconf.rendering.ConfigRenderer object at                │ │
-│ │             0x76b860994e90>                                              │ │
+│ │             0x7eee184f5910>                                              │ │
 │ │         v = PurePosixPath('val2')                                        │ │
 │ │ variables = [PurePosixPath('val2')]                                      │ │
 │ ╰──────────────────────────────────────────────────────────────────────────╯ │
 ╰──────────────────────────────────────────────────────────────────────────────╯
-RuntimeError: Circular dependencies detected.(/node1/node2/val3 -> 
-/node1/node2/val2 -> /node1/node2/val1)
+RuntimeError: Circular dependencies detected.(/node1/node2/val2 -> 
+/node1/node2/val1 -> /node1/node2/val3)
 
 ```
 
 PowerConf uses the [fspathtree](https://github.com/cd3/fspathtree) library for storing the configuration tree,
 so you can use relative or absolute paths to access any parameter in the tree.
 
+<!-- {{{ -->
+<!-- config = ''' -->
+<!-- grid:        -->
+<!--  res: 0.1 -->
+<!--  x:      -->
+<!--    min: -1    -->
+<!--    max: 1    -->
+<!--    N: $( int( (${max}-${min})/${../res} ) )   -->
+<!--  y:      -->
+<!--    min: $(${../x/min})    -->
+<!--    max: $(${../x/max})    -->
+<!--    N: $(${../x/N})   -->
+<!--  z:      -->
+<!--    min: 0   -->
+<!--    max: 5    -->
+<!--    N: $( int( (${max}-${min})/${../res} ) )   -->
+<!-- output:           -->
+<!--   dir: full_sim-res-$(${/grid/res})        -->
+<!-- '''.strip() -->
+<!-- config_file = pathlib.Path(NamedTemporaryFile().name) -->
+<!-- config_file.write_text(config) -->
+<!-- output = check_output(f'uv run powerconf print-instances {config_file}',shell=True).decode() -->
+<!-- }}} -->
 ```bash
 $cat CONFIG.yaml
 grid:        
@@ -423,6 +541,19 @@ PowerConf supports units. Any parameter can be given as a quantity (a value with
 This turns out to be _really_ useful, especially when configuring physics simulation.
 PowerConf will try to convert any string to a quantity, so defining parameters as quantities is natural.
 
+<!-- {{{ -->
+<!-- config = ''' -->
+<!-- grid:        -->
+<!--  res: 10 um -->
+<!--  x:      -->
+<!--    min: -1 cm   -->
+<!--    max: 1 cm   -->
+<!--    N: $( int( (${max}-${min})/${../res} ) )   -->
+<!-- '''.strip() -->
+<!-- config_file = pathlib.Path(NamedTemporaryFile().name) -->
+<!-- config_file.write_text(config) -->
+<!-- output = check_output(f'uv run powerconf print-instances {config_file}',shell=True).decode() -->
+<!-- }}} -->
 ```bash
 $cat CONFIG.yaml
 grid:        
@@ -454,6 +585,23 @@ PowerConf also supports generating multiple configurations. This is useful when 
 laser damage threshold as a function of wavelength). There are two ways to generate multiple configurations. The first is by
 using the '@batch' keyword.
 
+<!-- {{{ -->
+<!-- config = ''' -->
+<!-- grid:        -->
+<!--  res: -->
+<!--    '@batch': -->
+<!--      - 1 um -->
+<!--      - 10 um -->
+<!--      - 100 um -->
+<!--  x:      -->
+<!--    min: -1 cm   -->
+<!--    max: 1 cm   -->
+<!--    N: $( int( (${max}-${min})/${../res} ) )   -->
+<!-- '''.strip() -->
+<!-- config_file = pathlib.Path(NamedTemporaryFile().name) -->
+<!-- config_file.write_text(config) -->
+<!-- output = check_output(f'uv run powerconf print-instances {config_file}',shell=True).decode() -->
+<!-- }}} -->
 ```bash
 $cat CONFIG.yaml
 grid:        
@@ -499,6 +647,24 @@ sees a '@batch' node, it creates multiple copies of the configuration tree, one 
 
 Multiple parameters can be batched.
 
+<!-- {{{ -->
+<!-- config = ''' -->
+<!-- laser:        -->
+<!--  wavelength: -->
+<!--    '@batch': -->
+<!--      - 500 nm -->
+<!--      - 600 nm -->
+<!--      - 700 nm -->
+<!--  one_over_e_diameter: -->
+<!--    '@batch':           -->
+<!--      - 1 mm           -->
+<!--      - 3 mm           -->
+<!--      - 1 cm           -->
+<!-- '''.strip() -->
+<!-- config_file = pathlib.Path(NamedTemporaryFile().name) -->
+<!-- config_file.write_text(config) -->
+<!-- output = check_output(f'uv run powerconf print-instances {config_file}',shell=True).decode() -->
+<!-- }}} -->
 ```bash
 $cat CONFIG.yaml
 laser:        
@@ -564,6 +730,27 @@ When multiple parameters are batched, a configuration for every combination of p
 
 The second way to generate multiple parameters is to use multiple yaml documents.
 
+<!-- {{{ -->
+<!-- config = ''' -->
+<!-- grid:    -->
+<!--  x:      -->
+<!--    min: -1 cm   -->
+<!--    max: 1 cm   -->
+<!--    N: $( int( (${max}-${min})/${../res} ) )   -->
+<!-- --- -->
+<!-- grid:        -->
+<!--  res: 1 um  -->
+<!-- --- -->
+<!-- grid:        -->
+<!--  res: 10 um  -->
+<!-- --- -->
+<!-- grid:        -->
+<!--  res: 100 um  -->
+<!-- '''.strip() -->
+<!-- config_file = pathlib.Path(NamedTemporaryFile().name) -->
+<!-- config_file.write_text(config) -->
+<!-- output = check_output(f'uv run powerconf print-instances {config_file}',shell=True).decode() -->
+<!-- }}} -->
 ```bash
 $cat CONFIG.yaml
 grid:    
@@ -616,6 +803,29 @@ this is useful when you want to batch to parameters but you don't
 want all possible combinations.
 
 ```
+<!-- {{{ -->
+<!-- config = ''' -->
+<!-- laser:    -->
+<!--  wavelength: 532 nm     -->
+<!-- --- -->
+<!-- laser:    -->
+<!--  exposure_duration: 10 us     -->
+<!--  one_over_e_diameter:     -->
+<!--    '@batch':              -->
+<!--      - 20 um              -->
+<!--      - 40 um              -->
+<!-- --- -->
+<!-- laser:    -->
+<!--  exposure_duration: 100 us     -->
+<!--  one_over_e_diameter:     -->
+<!--    '@batch':              -->
+<!--      - 100 um              -->
+<!--      - 200 um              -->
+<!-- '''.strip() -->
+<!-- config_file = pathlib.Path(NamedTemporaryFile().name) -->
+<!-- config_file.write_text(config) -->
+<!-- output = check_output(f'uv run powerconf print-instances {config_file}',shell=True).decode() -->
+<!-- }}} -->
 ```bash
 $cat CONFIG.yaml
 laser:    
@@ -662,6 +872,143 @@ laser:
 ```
 ```
 
+### Including Configuration from Other Files
+
+PowerConf supports loading parts of the configuration tree from other files using the `@include` keyword.
+This is useful when you have common configuration that is shared between multiple configuration files,
+or when you want to keep your configuration files organized.
+
+<!-- {{{ -->
+<!-- grid_config = ''' -->
+<!-- min: 0 cm -->
+<!-- max: 1 cm -->
+<!-- N: 101 -->
+<!-- '''.strip() -->
+<!-- config = ''' -->
+<!-- simulation: -->
+<!--   grid: -->
+<!--     x: -->
+<!--       '@include': grid.yml -->
+<!--     y: -->
+<!--       '@include': grid.yml -->
+<!--   time: -->
+<!--     min: 0 s -->
+<!--     max: 1 s -->
+<!-- '''.strip() -->
+<!-- cur_dir = os.getcwd() -->
+<!-- with TemporaryDirectory() as temp_dir: -->
+<!--   os.chdir(temp_dir) -->
+<!--   pathlib.Path("grid.yml").write_text(grid_config) -->
+<!--   pathlib.Path("CONFIG.yaml").write_text(config) -->
+<!--   output = check_output(f'uv run powerconf print-instances CONFIG.yaml',shell=True).decode() -->
+<!-- os.chdir(cur_dir) -->
+<!-- }}} -->
+```bash
+$cat grid.yml
+min: 0 cm 
+max: 1 cm 
+N: 101
+$cat CONFIG.yaml
+simulation: 
+  grid: 
+    x: 
+      '@include': grid.yml 
+    y: 
+      '@include': grid.yml 
+  time: 
+    min: 0 s 
+    max: 1 s
+$ powerconf print-instances CONFIG.yaml
+simulation:
+  grid:
+    x:
+      N: 101
+      max: 1 centimeter
+      min: 0 centimeter
+    y:
+      N: 101
+      max: 1 centimeter
+      min: 0 centimeter
+  time:
+    max: 1 second
+    min: 0 second
+
+
+```
+
+Here, both `x` and `y` grids are loaded from the same `grid.yml` file. The `@include` node is replaced
+by the contents of the specified file. Like `@batch`, `@include` needs to be quoted so that the YAML parser
+treats it as a string.
+
+The included file can itself contain expressions and variable references. It can even contain `@include` nodes,
+allowing for nested includes.
+
+<!-- {{{ -->
+<!-- x_grid_config = ''' -->
+<!-- min: -1 cm -->
+<!-- max: 1 cm -->
+<!-- N: $( int((${max}-${min})/${../../res}) ) -->
+<!-- '''.strip() -->
+<!-- y_grid_config = ''' -->
+<!-- min: 0 cm -->
+<!-- max: 2 cm -->
+<!-- N: $( int((${max}-${min})/${../../res}) ) -->
+<!-- '''.strip() -->
+<!-- config2 = ''' -->
+<!-- simulation: -->
+<!--   res: 100 um -->
+<!--   grid: -->
+<!--     x: -->
+<!--       '@include': x-grid.yml -->
+<!--     y: -->
+<!--       '@include': y-grid.yml -->
+<!-- '''.strip() -->
+<!-- cur_dir = os.getcwd() -->
+<!-- with TemporaryDirectory() as temp_dir: -->
+<!--   os.chdir(temp_dir) -->
+<!--   pathlib.Path("x-grid.yml").write_text(x_grid_config) -->
+<!--   pathlib.Path("y-grid.yml").write_text(y_grid_config) -->
+<!--   pathlib.Path("CONFIG.yaml").write_text(config2) -->
+<!--   output2 = check_output(f'uv run powerconf print-instances CONFIG.yaml',shell=True).decode() -->
+<!-- os.chdir(cur_dir) -->
+<!-- }}} -->
+```bash
+$cat x-grid.yml
+min: -1 cm 
+max: 1 cm 
+N: $( int((${max}-${min})/${../../res}) )
+$cat y-grid.yml
+min: 0 cm 
+max: 2 cm 
+N: $( int((${max}-${min})/${../../res}) )
+$cat CONFIG.yaml
+simulation: 
+  res: 100 um 
+  grid: 
+    x: 
+      '@include': x-grid.yml 
+    y: 
+      '@include': y-grid.yml
+$ powerconf print-instances CONFIG.yaml
+simulation:
+  grid:
+    x:
+      N: 200
+      max: 1 centimeter
+      min: -1 centimeter
+    y:
+      N: 200
+      max: 2 centimeter
+      min: 0 centimeter
+  res: 100 micrometer
+
+
+```
+
+In this example, the included files reference `${../../res}` which is a parameter in the parent configuration.
+Variable references in included files are resolved after the include is expanded, so they have access to the
+full configuration tree.
+
 ### Configuring external tools/simulations
 
 #### `powerconf generate`
@@ -686,6 +1033,23 @@ If you are using a legacy model or a model
 that you didn't write, you will have to configure the model using a file format
 supported by the model. If the model reads yaml or json, you can use `powerconf generate` to write configuration file(s)
 
+<!-- {{{ -->
+<!-- config = ''' -->
+<!-- grid:        -->
+<!--  res: 0.1 -->
+<!--  x:      -->
+<!--    min: -1    -->
+<!--    max: 1    -->
+<!--    N: $( int( (${max}-${min})/${../res} ) )   -->
+<!-- '''.strip() -->
+<!-- config_file = pathlib.Path(NamedTemporaryFile().name) -->
+<!-- config_file_2 = pathlib.Path(NamedTemporaryFile().name) -->
+<!-- config_file.write_text(config) -->
+<!-- output = check_output(f'uv run powerconf generate {config_file} {config_file_2}',shell=True).decode() -->
+<!-- config_2_yaml = config_file_2.read_text() -->
+<!-- output = check_output(f'uv run powerconf generate {config_file} {config_file_2} --format json',shell=True).decode() -->
+<!-- config_2_json = config_file_2.read_text() -->
+<!-- }}} -->
 ```bash
 $cat CONFIG.yaml
 grid:        
@@ -711,7 +1075,36 @@ $ cat CONFIG2.json
 It is often more convenient to add a separate node in your configuration just for the model your configuring. This is useful for
 adding support for legacy models or even configuration multiple models with a shared configuration.
 
+<!-- {{{ -->
+<!-- config = ''' -->
+<!-- grid:        -->
+<!--  res: 10 um -->
+<!--  x:      -->
+<!--    min: -1 cm   -->
+<!--    max: 1 cm   -->
+<!--    N: $( int( (${max}-${min})/${../res} ) )   -->
+<!-- acme:  -->
+<!--  grid: -->
+<!--    x:  -->
+<!--      min: $(${/grid/x/min}.to('mm').magnitude) -->
+<!--      max: $(${/grid/x/max}.to('mm').magnitude) -->
+<!--      N: $(int(${/grid/x/N})) -->
+<!-- wile-e:  -->
+<!--   x_min: $(${/grid/x/min}.to('cm').magnitude) -->
+<!--   x_max: $(${/grid/x/max}.to('cm').magnitude) -->
+<!--   x_N: $(int(${/grid/x/N})) -->
+<!-- '''.strip() -->
+<!-- config_file = pathlib.Path(NamedTemporaryFile().name) -->
+<!-- config_file_2 = pathlib.Path(NamedTemporaryFile().name) -->
+<!-- config_file.write_text(config) -->
+<!-- }}} -->
 
+<!-- {{{ -->
+<!-- output = check_output(f'uv run powerconf generate --node acme {config_file} {config_file_2}',shell=True).decode() -->
+<!-- config_2_yaml = config_file_2.read_text() -->
+<!-- output = check_output(f'uv run powerconf generate --node wile-e {config_file} {config_file_2}',shell=True).decode() -->
+<!-- config_3_yaml = config_file_2.read_text() -->
+<!-- }}} -->
 ```bash
 $cat CONFIG.yaml
 grid:        
@@ -752,6 +1145,38 @@ The `--node`  option tells PowerConf to extract the tree under the specified nod
 
 `poerconf generate` can also handle batch configurations, in which case it will write the configuration files to a subdirectory.
 
+<!-- {{{-->
+<!-- config = ''' -->
+<!-- grid:        -->
+<!--  res:-->
+<!--    '@batch':-->
+<!--      - 10 um-->
+<!--      - 20 um-->
+<!--  x:      -->
+<!--    min: -1 cm   -->
+<!--    max: 1 cm   -->
+<!--    N: $( int( (${max}-${min})/${../res} ) )   -->
+<!-- acme:  -->
+<!--  grid: -->
+<!--    x:  -->
+<!--      min: $(${/grid/x/min}.to('mm').magnitude) -->
+<!--      max: $(${/grid/x/max}.to('mm').magnitude) -->
+<!--      N: $(int(${/grid/x/N})) -->
+<!-- wile-e:  -->
+<!--   x_min: $(${/grid/x/min}.to('cm').magnitude) -->
+<!--   x_max: $(${/grid/x/max}.to('cm').magnitude) -->
+<!--   x_N: $(int(${/grid/x/N})) -->
+<!-- '''.strip() -->
+<!-- cur_dir = os.getcwd()                                  -->
+<!-- with TemporaryDirectory() as temp_dir:                -->
+<!--   os.chdir(temp_dir)                                  -->
+<!--   config_file = pathlib.Path("CONFIG.yaml") -->
+<!--   config_file.write_text(config) -->
+<!--   check_output(f'uv run powerconf generate --node acme CONFIG.yaml ACME-CONFIG.d',shell=True).decode() -->
+<!--   output = check_output(f'ls',shell=True).decode() -->
+<!--   output2 = check_output(f'ls ACME-CONFIG.d',shell=True).decode() -->
+<!-- os.chdir(cur_dir)                                  -->
+<!-- }}}-->
 
 ```bash
 $cat CONFIG.yaml
@@ -793,6 +1218,43 @@ more common), the `powerconf render` command can be used to generate
 configuration file instances from a template.  This requires an additional
 template file to be supplied.
 
+<!-- {{{-->
+<!-- config = ''' -->
+<!-- grid:        -->
+<!--  res: 10 um -->
+<!--  x:      -->
+<!--    min: -1 cm   -->
+<!--    max: 1 cm   -->
+<!--    N: $( int( (${max}-${min})/${../res} ) )   -->
+<!-- acme:  -->
+<!--  grid: -->
+<!--    x:  -->
+<!--      min: $(${/grid/x/min}.to('mm').magnitude) -->
+<!--      max: $(${/grid/x/max}.to('mm').magnitude) -->
+<!--      N: $(int(${/grid/x/N})) -->
+<!-- '''.strip() -->
+<!-- template = ''' -->
+<!-- # out grid configuration                -->
+<!-- grid.x.min = {{acme/grid/x/min}}        -->
+<!-- grid.x.max = {{acme/grid/x/min}}        -->
+<!-- grid.x.N   = {{acme/grid/x/N}}        -->
+<!-- # our material configuration          -->
+<!-- material.density = 1                  -->
+<!-- material.specific_heat = 4.18               -->
+<!-- material.thermal_conductivity = 0.004              -->
+<!-- '''.strip() -->
+<!-- cur_dir = os.getcwd()                                  -->
+<!-- with TemporaryDirectory() as temp_dir:                -->
+<!--   os.chdir(temp_dir)                                  -->
+<!--   config_file = pathlib.Path("CONFIG.yaml") -->
+<!--   template_file = pathlib.Path("ACME-CONFIG.txt.template") -->
+<!--   config_file.write_text(config) -->
+<!--   template_file.write_text(template) -->
+<!--   check_output(f'uv run powerconf render CONFIG.yaml ACME-CONFIG.txt.template ACME-CONFIG.txt',shell=True).decode() -->
+<!--   output = check_output(f'ls',shell=True).decode() -->
+<!--   output2 = pathlib.Path('ACME-CONFIG.txt').read_text() -->
+<!-- os.chdir(cur_dir)                                  -->
+<!-- }}}-->
 
 ```bash
 $cat CONFIG.yaml

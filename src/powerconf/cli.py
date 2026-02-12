@@ -783,7 +783,6 @@ def report(
             for row in rows:
                 f.write("|".join(row))
                 f.write("\n")
-    """
     iconsole = Console(stderr=False)
     econsole = Console(stderr=True)
     iconsole.print("Loading configuration(s)")

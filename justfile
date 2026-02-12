@@ -7,7 +7,7 @@ pytest *args:
     uv run pytest "$@"
 
 make-readme:
-    compudoc README.md.cd README.md --comment-line-pattern "<!--{{{{CODE}}-->"
+    uv run compudoc README.md.cd README.md --comment-line-pattern "<!--{{{{CODE}}-->"
 
 publish:
     rm dist -rf
