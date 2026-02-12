@@ -139,43 +139,30 @@ def load_includes(config: fspathtree, loader):
     @param config: the configuration tree to expand. If the tree does not include any '@include' leafs, it will not be changes.
     @param loader: a function that accepts a pathlib.Path argument and loads the contents of the file into an fspathtree that is returned.
     """
-    # handle @include's at the root level first.
-    leaf = "/@include"
-    if leaf in config:
-        if type(config[leaf]) is str:
-            subtree = loader(Path(config[leaf]))
-            subtree = load_includes(subtree, loader)
-        elif type(config[leaf]) == fspathtree and type(config[leaf].tree) == list:
-            # load first include
-            subtree = loader(Path(config[leaf][0]))
-            # load others using update method
-            for i in range(1, len(config[leaf])):
-                subtree.update(loader(Path(config[leaf][i])))
-            subtree = load_includes(subtree, loader)
-        else:
-            raise RuntimeError(
-                "'@include' node value must be a string or a list of strings."
-            )
-        config.update(subtree)
-
-    for leaf in config.get_all_paths(
-        predicate=lambda p: len(p.parts) > 2 and p.name == "@include"
-    ):
+    for leaf in list(config.get_all_paths(predicate=lambda p: p.name == "@include")):
         if type(config[leaf]) == str:
-            subtree = loader(Path(config[leaf]))
-            subtree = load_includes(subtree, loader)
+            loaded_config = loader(Path(config[leaf]))
+            loaded_config = load_includes(loaded_config, loader)
         elif type(config[leaf]) == fspathtree and type(config[leaf].tree) == list:
             # load first include
-            subtree = loader(Path(config[leaf][0]))
+            loaded_config = loader(Path(config[leaf][0]))
             # load others using update method
             for i in range(1, len(config[leaf])):
-                subtree.update(loader(Path(config[leaf][i])))
-            subtree = load_includes(subtree, loader)
+                loaded_config.update(loader(Path(config[leaf][i])))
+            loaded_config = load_includes(loaded_config, loader)
         else:
             raise RuntimeError(
                 "'@include' node value must be a string or a list of strings."
             )
-        config[leaf.parent] = subtree.tree
+
+        if len(leaf.parts) == 2:  # an @include at the config root
+            # we want any keys in the main config to override the config
+            # loaded from file
+            loaded_config.update(config)
+            config = loaded_config
+        else:
+            config[leaf.parent] = loaded_config.tree
+
     return config
 
 

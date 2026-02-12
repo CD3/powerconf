@@ -796,3 +796,63 @@ def test_include_at_root_with_list(tmp_path):
         assert config["thermal/k"] == 3
         assert config["optical/mu_a"] == 4
         assert config["optical/mu_s"] == 5
+
+
+def test_include_at_root_with_override(tmp_path):
+    """
+    parameters in the configuration file that is loaded should override
+    any parameters in the included configurations.
+    """
+    with unit_test_utils.working_directory(tmp_path):
+        text1 = """
+    '@include':
+      - 'thermal.yml'
+      - 'optical.yml'
+    simulation:
+        grid:
+          x:
+            min: 0 cm
+            max: 1 cm
+            N: 100
+    thermal:
+        rho: 10
+        v: 20
+    """
+
+        text2 = """
+    thermal: 
+        rho: 1
+        c: 2
+        k: 3
+    """
+        text3 = """
+    optical: 
+        mu_a: 4
+        mu_s: 5
+    """
+
+        pathlib.Path("thermal.yml").write_text(text2)
+        pathlib.Path("optical.yml").write_text(text3)
+
+        config = loaders.yaml(text1)
+        config = rendering.load_includes(config, loaders.yaml)
+
+        assert "simulation/grid/x/min" in config
+        assert "simulation/grid/x/max" in config
+        assert "simulation/grid/x/N" in config
+        assert "thermal/rho" in config
+        assert "thermal/c" in config
+        assert "thermal/k" in config
+        assert "thermal/v" in config
+        assert "optical/mu_a" in config
+        assert "optical/mu_s" in config
+
+        assert config["simulation/grid/x/min"] == "0 cm"
+        assert config["simulation/grid/x/max"] == "1 cm"
+        assert config["simulation/grid/x/N"] == 100
+        assert config["thermal/rho"] == 10
+        assert config["thermal/c"] == 2
+        assert config["thermal/k"] == 3
+        assert config["thermal/v"] == 20
+        assert config["optical/mu_a"] == 4
+        assert config["optical/mu_s"] == 5
