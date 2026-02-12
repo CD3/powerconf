@@ -1,5 +1,8 @@
 set positional-arguments := true
 
+list:
+    just --list
+
 test *args:
     uv run nox "$@"
 
