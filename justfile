@@ -3,6 +3,9 @@ set positional-arguments := true
 list:
     just --list
 
+setup:
+    uv sync --extra dev
+
 test *args:
     uv run nox "$@"
 

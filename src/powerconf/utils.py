@@ -8,7 +8,7 @@ import typing
 from fspathtree import fspathtree
 
 
-def get_id(
+def compute_id(
     config: fspathtree,
     path_predicate: typing.Callable[[fspathtree], bool] = None,
 ):
@@ -32,6 +32,9 @@ def get_id(
 
     text = json.dumps(c.tree, sort_keys=True).replace(" ", "")
     return hashlib.md5(text.encode("utf-8")).hexdigest()
+
+
+get_id = compute_id
 
 
 def apply_transform(

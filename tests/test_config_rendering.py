@@ -856,3 +856,43 @@ def test_include_at_root_with_override(tmp_path):
         assert config["thermal/v"] == 20
         assert config["optical/mu_a"] == 4
         assert config["optical/mu_s"] == 5
+
+
+def test_config_hashing(tmp_path):
+    with unit_test_utils.working_directory(tmp_path):
+        pathlib.Path("powerconf_extensions.py").write_text("""import powerconf""")
+        config_renderer = rendering.ConfigRenderer()
+
+        config_text = """
+    hashes: 
+        sub:
+          branch-1: $(powerconf.utils.compute_id(${/branch-1}))
+          branch-2: $(powerconf.utils.compute_id(${/branch-2}))
+        main: $(powerconf.utils.compute_id(${sub}))
+    branch-1:
+        - name: a
+    branch-2:
+        - name: b
+    """
+
+        config1 = config_renderer.render(fspathtree(yaml.safe_load(config_text)))
+
+        assert len(config1) == 3
+
+        config_text = """
+    hashes: 
+        sub:
+          branch-1: $(powerconf.utils.compute_id(${/branch-1}))
+          branch-2: $(powerconf.utils.compute_id(${/branch-2}))
+        main: $(powerconf.utils.compute_id(${sub}))
+    branch-1:
+        - name: b
+    branch-2:
+        - name: a
+    """
+
+        config2 = config_renderer.render(fspathtree(yaml.safe_load(config_text)))
+
+        assert len(config2) == 3
+
+        assert config1["/hashes/main"] != config2["/hashes/main"]
