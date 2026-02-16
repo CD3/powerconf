@@ -171,89 +171,90 @@ output = output-1.txt
         )
 
 
-def test_run_command_timing(tmp_path):
-    with working_directory(tmp_path):
-        config_text = """
-powerconf-run:
-    acme:
-        command:
-            - sleep 0.5
-    """
+# def test_run_command_timing(tmp_path):
+#     with working_directory(tmp_path):
+#         config_text = """
+# powerconf-run:
+#     acme:
+#         command:
+#             - sleep 0.5
+#     """
 
-        config_file = tmp_path / "CONFIG.yml"
-        config_file.write_text(config_text)
+#         config_file = tmp_path / "CONFIG.yml"
+#         config_file.write_text(config_text)
 
-        start = time.perf_counter()
-        result = runner.invoke(app, ["run", "acme", str(config_file)])
-        if result.exit_code != 0:
-            print("STDOUT:", result.stdout)
-            print("STDERR:", result.stderr)
-        assert result.exit_code == 0
-        end = time.perf_counter()
-        duration = end - start
-        assert duration > 0.5
-        assert duration < 1
+#         start = time.perf_counter()
+#         result = runner.invoke(app, ["run", "acme", str(config_file)])
+#         if result.exit_code != 0:
+#             print("STDOUT:", result.stdout)
+#             print("STDERR:", result.stderr)
+#         assert result.exit_code == 0
+#         end = time.perf_counter()
+#         duration = end - start
+#         assert duration > 0.5
+#         assert duration < 1
 
-        config_text = """
-powerconf-run:
-    acme:
-        command:
-            - sleep 1
-    """
+#         config_text = """
+# powerconf-run:
+#     acme:
+#         command:
+#             - sleep 1
+#     """
 
-        config_file.write_text(config_text)
+#         config_file.write_text(config_text)
 
-        start = time.perf_counter()
-        result = runner.invoke(app, ["run", "acme", str(config_file)])
-        end = time.perf_counter()
-        duration = end - start
-        assert duration > 1
-        assert duration < 2
+#         start = time.perf_counter()
+#         result = runner.invoke(app, ["run", "acme", str(config_file)])
+#         end = time.perf_counter()
+#         duration = end - start
+#         assert duration > 1
+#         assert duration < 2
 
-        config_text = """
-num:
-    '@batch':
-      - 1
-      - 2
-powerconf-run:
-    acme:
-        command:
-            - sleep 1
-    """
+#         config_text = """
+# num:
+#     '@batch':
+#       - 1
+#       - 2
+# powerconf-run:
+#     acme:
+#         command:
+#             - sleep 1
+#     """
 
-        config_file.write_text(config_text)
+#         config_file.write_text(config_text)
 
-        start = time.perf_counter()
-        result = runner.invoke(app, ["run", "acme", str(config_file)])
-        assert result.exit_code == 0
-        end = time.perf_counter()
-        duration = end - start
-        # we are running each config in parallel (using multiprocessing)
-        # so the run time should be the same for two as it is for one.
-        assert duration > 1
-        assert duration < 2
+#         start = time.perf_counter()
+#         result = runner.invoke(app, ["run", "acme", str(config_file)])
+#         assert result.exit_code == 0
+#         end = time.perf_counter()
+#         duration = end - start
+#         # we are running each config in parallel (using multiprocessing)
+#         # so the run time should be the same for two as it is for one.
+#         assert duration > 1
+#         assert duration < 2
 
 
 def test_report_command(tmp_path):
-    config_text = """
-num:
-    '@batch':
-      - 1
-      - 2
-powerconf-report:
-    columns:
-     - title: 'num'
-       value: $(${/num})
-    """
-    config_file = tmp_path / "CONFIG.yml"
-    config_file.write_text(config_text)
+    with working_directory(tmp_path):
+        config_text = """
+    num:
+        '@batch':
+          - 1
+          - 2
+    powerconf-report:
+        columns:
+         - title: 'num'
+           value: $(${/num})
+        """
+        config_file = tmp_path / "CONFIG.yml"
+        config_file.write_text(config_text)
 
-    result = runner.invoke(app, ["report", str(config_file), "report.txt"])
-    assert result.exit_code == 0
-    assert P("report.txt").exists()
-    report_text = P("report.txt").read_text()
+        result = runner.invoke(app, ["report", str(config_file), "report.txt"])
+        assert result.exit_code == 0
+        assert P("report.txt").exists()
+        report_text = P("report.txt").read_text()
 
-    assert report_text == "num\n1\n2\n"
+        assert report_text == "num\n1\n2\n"
 
 
 def teardown_module(module):

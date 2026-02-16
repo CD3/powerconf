@@ -392,47 +392,6 @@ def validate(
 
 
 @app.command()
-def report(
-    config_file: Path,
-    output_file: Annotated[
-        Path, typer.Argument(help="File to write report to.")
-    ] = Path("/dev/stdout"),
-    format: Annotated[
-        str, typer.Argument(help="Report format. Currently only 'txt' is supported.")
-    ] = "txt",
-):
-    """
-    Read a powerconf-enabled configuration file and write a report file (table of config values).
-
-    This is useful when you have multiple configurations (i.e. batch configs) and want to correlate
-    some output data to the inputs.
-    """
-    configs = yaml.powerload(config_file, njobs=njobs)
-
-    if len(configs) == 1:
-        # configuration expands into a single instance
-        if output == template_file:
-            raise RuntimeError(
-                "Output file and template file are the same. This would overwrite the template file."
-            )
-        output.parent.mkdir(exist_ok=True, parents=True)
-        rendering.render_mustache_template_file(template_file, configs[0], output)
-    else:
-        output.mkdir(exist_ok=True, parents=True)
-        for config in configs:
-            _id = utils.get_id(config)
-            output_file_suffix = template_file.suffix
-            output_file_basename = template_file.with_suffix("")
-            if template_file.suffix in [".template", ".tpl"]:
-                output_file_suffix = output_file_basename.suffix
-                output_file_basename = output_file_basename.with_suffix("")
-            output_filename = output_file_basename.name + "-" + _id + output_file_suffix
-            rendering.render_mustache_template_file(
-                template_file, config, output / output_filename
-            )
-
-
-@app.command()
 def generate(
     config_file: Path,
     output: Path,
@@ -735,54 +694,11 @@ def report(
     ] = "txt",
 ):
     """
-    Generate a report (table of config values) from a
+    Read a powerconf-enabled configuration file and write a report file (table of config values).
+
+    This is useful when you have multiple configurations (i.e. batch configs) and want to correlate
+    some output data to the inputs.
     """
-    iconsole = Console(stderr=False)
-    econsole = Console(stderr=True)
-    iconsole.print("Loading configuration(s)")
-    try:
-        configs = yaml.powerload(config_file, njobs=multiprocessing.cpu_count())
-    except KeyError as e:
-        econsole.print(
-            "[red]A configuration parameter references another non-existent parameter.[/red]"
-        )
-
-        econsole.print("\n\n[red]" + str(e) + "[/red]\n\n")
-        raise typer.Exit(1)
-    iconsole.print("done.")
-
-    rows = []
-    rows.append(
-        list(
-            map(
-                lambda n: (
-                    n["title"]
-                    if "unit" not in n
-                    else n["title"] + " [" + n["unit"] + "]"
-                ),
-                configs[0]["/powerconf-report/columns"],
-            )
-        )
-    )
-    for config in configs:
-        row = []
-        for i in range(len(rows[0])):
-            v = config[f"/powerconf-report/columns/{i}/value"]
-            if v is None:
-                v = "--"
-            elif "unit" in config[f"/powerconf-report/columns/{i}"]:
-                v.ito(config[f"/powerconf-report/columns/{i}/unit"])
-                v = str(v.magnitude)
-            else:
-                v = str(v)
-            row.append(v)
-        rows.append(row)
-
-    if format == "txt":
-        with output_file.open("w") as f:
-            for row in rows:
-                f.write("|".join(row))
-                f.write("\n")
     iconsole = Console(stderr=False)
     econsole = Console(stderr=True)
     iconsole.print("Loading configuration(s)")
