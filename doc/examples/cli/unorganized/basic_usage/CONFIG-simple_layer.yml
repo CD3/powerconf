@@ -9,7 +9,7 @@ simulation:
       max: 1 cm
       n: $(int(${max}/${../res}) + 1)
 
-# parameters that will be inserted diredctly into ACME config file.
+# parameters that will be inserted directly into ACME config file.
 # these parameters _MUST_ be given.
 # all quantities need to be converted to ACME internal units (cgs)
 # and turned into plain numbers.

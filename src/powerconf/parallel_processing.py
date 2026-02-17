@@ -8,12 +8,12 @@ class BatchJobController:
     """
     A class for managing batch jobs.
     
-    target should be a 'job server', a function that runs indefinatly while listening
-    for messages and stops when it recieves a "stop" message (i.e. a string with the text stop).
+    target should be a 'job server', a function that runs indefinitely while listening
+    for messages and stops when it receives a "stop" message (i.e. a string with the text stop).
 
     Jobs are sent to the job server from the `run_jobs(self,jobs)` method. Each item in the `jobs`
     list is sent to the job server as "as is". The job server and the caller of `run_jobs(self,jobs)`
-    are responsile for coordinating message types.
+    are responsible for coordinating message types.
     """
     def __init__(self,target,njobs=None):
         self.njobs = njobs if njobs is not None else multiprocessing.cpu_count()

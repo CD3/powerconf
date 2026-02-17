@@ -14,7 +14,7 @@ __local_Quantity = units.Q_
 
 def expand_partial_configs(configs: List[fspathtree], include_base=False):
     """
-    Give a list of configuration trees, treat the frist tree
+    Given a list of configuration trees, treat the first tree
     as a "base" configuration and all other trees as partial configurations
     that should be merged with the base config to create instances.
 
@@ -53,7 +53,7 @@ def try_construct_quantity(
     @param is_quantity: a function returning true if the object should be considered a quantity. This allows the caller to provide
                         their logic to identify quantities.
     @param quantity_class : the class that should be used to construct quantities. pint cannot handle quantities from different
-                            registries, so this allows the caller to provide the class they are uing.
+                            registries, so this allows the caller to provide the class they are using.
     """
 
     if is_quantity is None:
@@ -84,7 +84,7 @@ def expand_variables(text: Any, template: str = "ctx['{name}']"):
     """
     Expand shell-style variables into python variables
 
-    @param template: optional template string used for variable expantion. The variables
+    @param template: optional template string used for variable expansion. The variables
                      name will be inserted into the template using {VARNAME}. Default value
                      is "ctx['{name}']", which means we will have:
 
@@ -106,7 +106,7 @@ def expand_variables(text: Any, template: str = "ctx['{name}']"):
 
 def contains_expression(text: Any):
     """
-    Returns true if a string contains expression.
+    Returns true if a string contains an expression.
     Supports passing not strings as arguments, in which
     case False is returned.
     """
@@ -120,7 +120,7 @@ def contains_expression(text: Any):
 
 def contains_variable(text: Any):
     """
-    Returns true if a string contains a variable refernce.
+    Returns true if a string contains a variable reference.
     Supports passing not strings as arguments, in which
     case False is returned.
     """
@@ -136,7 +136,7 @@ def load_includes(config: fspathtree, loader):
     Find all '@include' branches in the tree and load the branch from
     a file.
 
-    @param config: the configuration tree to expand. If the tree does not include any '@include' leafs, it will not be changes.
+    @param config: the configuration tree to expand. If the tree does not include any '@include' leaves, it will not be changed.
     @param loader: a function that accepts a pathlib.Path argument and loads the contents of the file into an fspathtree that is returned.
     """
     for leaf in list(config.get_all_paths(predicate=lambda p: p.name == "@include")):
@@ -212,7 +212,7 @@ class ConfigRenderer:
         G.add_nodes_from(config.get_all_leaf_node_paths())
         # draw edges between nodes representing dependencies.
         # edges point from a node to its dependency.
-        # if a node has incomming edges, other nodes depend on it
+        # if a node has incoming edges, other nodes depend on it
         # if a node has outgoing edges, it depends on others.
         for node in list(G.nodes):
             variables = [
@@ -250,7 +250,7 @@ class ConfigRenderer:
     ):
         """Evaluate the expressions in a configuration tree, using a graph of the tree dependencies to determine the render order."""
         # We need to determine the order to evaluate the nodes of the config tree.
-        # We have a graph that describes the dependencies. Each node is the graph is a leaf node
+        # We have a graph that describes the dependencies. Each node in the graph is a leaf node
         # in the tree, and the edges represent dependencies between nodes.
         # Consider an example,
         #
@@ -286,7 +286,7 @@ class ConfigRenderer:
         # we would need to direct our edges to point from dependencies to dependents.
 
         # Find all root dependencies. those nodes that don't depend on any others, but are depended on by others
-        # thse are all nodes with out_degrees == 0 and in_degrees > 0
+        # these are all nodes with out_degrees == 0 and in_degrees > 0
         root_dependencies = list(
             filter(
                 lambda k: in_degrees[k] > 0,
@@ -337,8 +337,8 @@ class ConfigRenderer:
         for root in root_dependencies:
             for a in graphs.nx.ancestors(graph, root):
                 all_chains += graphs.nx.all_simple_paths(graph, a, root)
-        # prune paths that are included in ohters,
-        # i.e. we only want to keep paths from each root to it's
+        # prune paths that are included in others,
+        # i.e. we only want to keep paths from each root to its
         # oldest ancestors.
         longest_chains = []
         for p1 in all_chains:
@@ -442,7 +442,7 @@ def render_mustache_template(template_text: str, ctx: fspathtree):
 
     # we have to pass a flat dict to pystache, so we generate
     # it inline here. also, Mustache uses a leading slash on a key to
-    # identify the end of a section, so we can use absolute path, just
+    # identify the end of a section, so we can't use absolute paths, just
     # relative paths with respect to the root.
     rendered_text = pystache.render(
         template_text, {str(p)[1:]: ctx[p] for p in ctx.get_all_leaf_node_paths()}

@@ -315,7 +315,7 @@ g : $($f)
     assert "Circular dependencies detected" in str(e)
 
 
-def test_long_dependency_chaings():
+def test_long_dependency_chains():
     """Adding unit support to legacy configs..."""
 
     config_text = """
@@ -572,7 +572,7 @@ grid:
 
 def test_creating_filenames():
     """
-    Demonstrate how we can powerconf to generate filenames (for output for example) based on config parameters.
+    Demonstrate how we can use powerconf to generate filenames (for output for example) based on config parameters.
     """
 
     config_text = """

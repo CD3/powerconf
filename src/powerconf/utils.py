@@ -16,9 +16,9 @@ def compute_id(
     Return a unique id for the given configuration object.
 
     @param path_predicate: a function that will be passed the path to each node
-    in the tree and should return true if the path sould be included in the
+    in the tree and should return true if the path should be included in the
     tree when creating the id. This is useful for removing config parameters
-    that are expected to change, but don't chnge the actual configuration.
+    that are expected to change, but don't change the actual configuration.
     """
     if path_predicate is None:
 
@@ -50,7 +50,7 @@ def apply_transform(
 
 
     @param transform: a function that accepts a path and node value, and returns the new value of the node.
-    @param predicate: a function that accepst a path and node value, and returns True if the node should
+    @param predicate: a function that accepts a path and node value, and returns True if the node should
                       have the transform apply. by default, all nodes have transform applied.
     """
 

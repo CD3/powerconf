@@ -55,18 +55,18 @@ def powerload(
     config_file: pathlib.Path, /, njobs=None, transform=None
 ) -> List[fspathtree]:
     """
-    Load a set of configurations from a YAML files.
+    Load a set of configurations from a YAML file.
 
     If the file contains multiple documents, the first document is assumed to be
     a base configuration with all following documents being partial configs that are applied
-    on top of the base configuration. This makes it easy define multiple configuration
+    on top of the base configuration. This makes it easy to define multiple configurations
     that only differ by a few settings in a single file.
 
     If configuration tree includes '@batch' nodes, these will be expanded into multiple configurations.
 
     For each configuration that is generated after considering all YAML documents and expanding all
     batch parameters, expressions are evaluated. This may include variable references to other configuration
-    parameter.
+    parameters.
 
     This is your one-stop-shop for loading powerconfigs from YAML files.
     """
@@ -99,7 +99,7 @@ def powerload(
     if transform is not None:
         if not isinstance(transform, FunctionType):
             raise RuntimeError("Transforms can only be function types")
-        # can't send a function through the pipe, so we need are sending the source code instead
+        # can't send a function through the pipe, so we are sending the source code instead
         # and then we'll exec it on the other end. What could go wrong...
         transform_src = textwrap.dedent("".join(inspect.getsourcelines(transform)[0]))
         if not transform_src.startswith("def"):

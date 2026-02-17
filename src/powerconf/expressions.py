@@ -7,7 +7,7 @@ class ExpressionError(Exception):
 
 
 class ExpressionEvaluator:
-    """A class for evaluting expressions in a separate environement."""
+    """A class for evaluating expressions in a separate environment."""
 
     def __init__(self):
         pass

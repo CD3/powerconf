@@ -43,7 +43,7 @@ def load_config(config_file: Path):
 def main():
     """
     The `powerconf` command is a CLI for the powerconf python module. It allows you to read
-    a configuration file, evaluate all expression, expand all batch nodes, etc, and write
+    a configuration file, evaluate all expressions, expand all batch nodes, etc., and write
     the "rendered" configurations to a file(s).
     """
 
@@ -111,7 +111,7 @@ def generate(
         typer.Option(
             "-n",
             "--node",
-            help="Select a node in the configuration tree. All nodes below the selected nod will be written to output as if they are in the root of a configuration tree.",
+            help="Select a node in the configuration tree. All nodes below the selected node will be written to output as if they are in the root of a configuration tree.",
         ),
     ] = "/",
     njobs: Annotated[
@@ -124,7 +124,7 @@ def generate(
     """
     Read a powerconf-enabled configuration file and write a generated configuration file.
 
-    This command is useful for writing configuration files for non-powerconf enbabled tools that read
+    This command is useful for writing configuration files for non-powerconf enabled tools that read
     tree-like configuration files in some common formats. You can create nodes for each
     of these tools in a single powerconf config file and then write them to separate
     config files in different formats (yaml, json, etc).
@@ -266,7 +266,7 @@ def run(
     config_file: Annotated[
         pathlib.Path,
         typer.Argument(
-            help="Confuration file. Includes model configuration and configuration for `powerconf run`."
+            help="Configuration file. Includes model configuration and configuration for `powerconf run`."
         ),
     ],
     dry_run: Annotated[
@@ -403,7 +403,7 @@ def generate(
         typer.Option(
             "-n",
             "--node",
-            help="Select a node in the configuration tree. All nodes below the selected nod will be written to output as if they are in the root of a configuration tree.",
+            help="Select a node in the configuration tree. All nodes below the selected node will be written to output as if they are in the root of a configuration tree.",
         ),
     ] = "/",
     njobs: Annotated[
@@ -416,7 +416,7 @@ def generate(
     """
     Read a powerconf-enabled configuration file and write a generated configuration file.
 
-    This command is useful for writing configuration files for non-powerconf enbabled tools that read
+    This command is useful for writing configuration files for non-powerconf enabled tools that read
     tree-like configuration files in some common formats. You can create nodes for each
     of these tools in a single powerconf config file and then write them to separate
     config files in different formats (yaml, json, etc).
@@ -558,7 +558,7 @@ def run(
     config_file: Annotated[
         pathlib.Path,
         typer.Argument(
-            help="Confuration file. Includes model configuration and configuration for `powerconf run`."
+            help="Configuration file. Includes model configuration and configuration for `powerconf run`."
         ),
     ],
     dry_run: Annotated[
