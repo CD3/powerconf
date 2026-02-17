@@ -4,7 +4,7 @@ requires = [ "hatchling" ]
 
 [project]
 name = "powerconf"
-version = "0.8.2"
+version = "0.8.3"
 description = "Powerup your configuration files."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -35,6 +35,11 @@ optional-dependencies.dev = [
 ]
 scripts."powerconf" = "powerconf.cli:app"
 
+[dependency-groups]
+dev = [
+  "pudb>=2025.1.5",
+]
+
 [tool.hatch.metadata]
 allow-direct-references = true
 
@@ -50,8 +55,3 @@ exclude = [ "tests/cram/" ]
 [tool.pytest.ini_options]
 addopts = "-m 'not benchmark'"
 markers = [ "benchmark: marks tests that are benchmarks (and take a while to run)." ]
-
-[dependency-groups]
-dev = [
-    "pudb>=2025.1.5",
-]
