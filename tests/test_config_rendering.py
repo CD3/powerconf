@@ -900,16 +900,50 @@ def test_config_hashing(tmp_path):
 
 
 def test_config_hashing_with_multiple_docs(tmp_path):
+    """
+    Make sure nodes that depend on non-leaf nodes get evaluated _after_ their dependencies.
+
+    This is not being handled correctly in 0.8.2
+    """
     with unit_test_utils.working_directory(tmp_path):
         pathlib.Path("powerconf_extensions.py").write_text("""import powerconf""")
         config_renderer = rendering.ConfigRenderer()
 
+        # this config "works" because the key ordering causes the dependency to be evaluated first
         config_text = """
 hashes: 
     sub:
       branch-1: $(powerconf.utils.compute_id(${/branch-1}))
       branch-2: $(powerconf.utils.compute_id(${/branch-2}))
     main: $(powerconf.utils.compute_id(${sub}))
+---
+branch-1:
+    - name: a
+branch-2:
+    - name: b
+---
+branch-1:
+    - name: b
+branch-2:
+    - name: a
+    """
+
+        pathlib.Path("CONFIG.yml").write_text(config_text)
+
+        configs = powerconf.yaml.powerload("CONFIG.yml")
+
+        assert len(configs) == 2
+        assert configs[0]["/hashes/main"] != configs[1]["/hashes/main"]
+        assert configs[0]["/hashes/sub/branch-1"] == configs[1]["/hashes/sub/branch-2"]
+        assert configs[0]["/hashes/sub/branch-2"] == configs[1]["/hashes/sub/branch-1"]
+
+        # this config "fails"
+        config_text = """
+hashes: 
+    main: $(powerconf.utils.compute_id(${sub}))
+    sub:
+      branch-1: $(powerconf.utils.compute_id(${/branch-1}))
+      branch-2: $(powerconf.utils.compute_id(${/branch-2}))
 ---
 branch-1:
     - name: a
