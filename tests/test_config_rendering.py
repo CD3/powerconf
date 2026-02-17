@@ -954,8 +954,7 @@ branch-1:
     - name: b
 branch-2:
     - name: a
-    """
-
+"""
         pathlib.Path("CONFIG.yml").write_text(config_text)
 
         configs = powerconf.yaml.powerload("CONFIG.yml")
@@ -964,3 +963,73 @@ branch-2:
         assert configs[0]["/hashes/main"] != configs[1]["/hashes/main"]
         assert configs[0]["/hashes/sub/branch-1"] == configs[1]["/hashes/sub/branch-2"]
         assert configs[0]["/hashes/sub/branch-2"] == configs[1]["/hashes/sub/branch-1"]
+
+
+def test_non_leaf_node_dependencies(tmp_path):
+    """
+    If a parameter depends on another parameter, we need to evaluate the parameter
+    it depends on _first_. Currently (2/17/26) this works when the dependency is a leaf
+    node, but works "randomly" when the dependency is a parent node.
+
+    The randomness is probably caused by evaluation order.
+    """
+
+    with unit_test_utils.working_directory(tmp_path):
+        pathlib.Path("powerconf_extensions.py").write_text("""
+def f(x):
+   return 2
+        """)
+        config_renderer = rendering.ConfigRenderer()
+
+        config_text = """
+a: $(f(1))
+b: $(${a})
+c: $(${d})
+d: $(f(1))
+t1:
+    a: $(f(1))
+    b: $(${a})
+t2: $(f(${t1}))
+
+t3: $(f(${t4}))
+t4:
+    a: $(f(1))
+    b: $(${a})
+b_t: $(f(${a_t}))
+a_t:
+    a: $(f(1))
+    b: $(${a})
+    """
+
+        config = config_renderer.render(fspathtree(yaml.safe_load(config_text)))
+
+        assert "a" in config
+        assert config["a"] == 2
+
+        assert "b" in config
+        assert config["b"] == 2
+
+        assert "c" in config
+        assert config["c"] == 2
+
+        assert "d" in config
+        assert config["d"] == 2
+
+        assert "t1/a" in config
+        assert "t1/b" in config
+        assert config["t1/a"] == 2
+        assert config["t1/b"] == 2
+
+        assert "t2" in config
+        assert config["t2"] == 2
+
+        assert "t4/a" in config
+        assert "t4/b" in config
+        assert config["t4/a"] == 2
+        assert config["t4/b"] == 2
+
+        assert "t3" in config
+        assert config["t3"] == 2
+
+        assert "b_t" in config
+        assert config["b_t"] == 2

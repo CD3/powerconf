@@ -220,10 +220,23 @@ class ConfigRenderer:
                 for r in parsing.variable.search_string(config[node])
             ]
             for v in variables:
+                # get absolute path to the dependency
                 dep = fspathtree.PathType(
                     normpath(v if v.is_absolute() else node.parent / v)
                 )
-                G.add_edge(node, dep)
+
+                # dep is a (absolute) path to the dependency.
+                # if the dep is *not* a node in the graph then it means it
+                # is *not* a leaf node. in this case, we need to add all leaf
+                # nodes _under_ it as dependencies...
+                if dep not in G:
+                    # loop over all leaf nodes under config[dep]
+                    for leaf in config[dep].get_all_leaf_node_paths():
+                        # leaf is a relative path to leaf node from the dep node
+                        # the aboslute path will be dep/leaf
+                        G.add_edge(node, dep / leaf)
+                else:
+                    G.add_edge(node, dep)
         # detect circular dependencies
         cycles = sorted(graphs.nx.simple_cycles(G))
         if len(cycles) > 0:

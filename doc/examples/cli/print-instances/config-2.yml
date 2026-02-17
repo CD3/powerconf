@@ -1,0 +1,13 @@
+# generating unique id's based on parts of the configuration
+grid:
+  min: 0 cm
+  max:
+    "@batch":
+      - 1 cm
+      - 2 cm
+hashes:
+  main: $(powerconf.utils.compute_id(${sub}))
+  sub:
+    grid: $(powerconf.utils.compute_id(${/grid}))
+    level2:
+      x: 1

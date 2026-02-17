@@ -50,3 +50,8 @@ exclude = [ "tests/cram/" ]
 [tool.pytest.ini_options]
 addopts = "-m 'not benchmark'"
 markers = [ "benchmark: marks tests that are benchmarks (and take a while to run)." ]
+
+[dependency-groups]
+dev = [
+    "pudb>=2025.1.5",
+]
