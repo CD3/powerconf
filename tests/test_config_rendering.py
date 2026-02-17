@@ -907,7 +907,6 @@ def test_config_hashing_with_multiple_docs(tmp_path):
     """
     with unit_test_utils.working_directory(tmp_path):
         pathlib.Path("powerconf_extensions.py").write_text("""import powerconf""")
-        config_renderer = rendering.ConfigRenderer()
 
         # this config "works" because the key ordering causes the dependency to be evaluated first
         config_text = """

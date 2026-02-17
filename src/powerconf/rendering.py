@@ -140,10 +140,10 @@ def load_includes(config: fspathtree, loader):
     @param loader: a function that accepts a pathlib.Path argument and loads the contents of the file into an fspathtree that is returned.
     """
     for leaf in list(config.get_all_paths(predicate=lambda p: p.name == "@include")):
-        if type(config[leaf]) == str:
+        if type(config[leaf]) is str:
             loaded_config = loader(Path(config[leaf]))
             loaded_config = load_includes(loaded_config, loader)
-        elif type(config[leaf]) == fspathtree and type(config[leaf].tree) == list:
+        elif type(config[leaf]) is fspathtree and type(config[leaf].tree) is list:
             # load first include
             loaded_config = loader(Path(config[leaf][0]))
             # load others using update method
