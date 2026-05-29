@@ -1,0 +1,3 @@
+'@include': inc.1.yml
+node1:
+  '@include': inc.2.yml
