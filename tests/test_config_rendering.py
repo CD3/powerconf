@@ -526,6 +526,127 @@ def test_multi_level_include_branches_yaml(tmp_path):
         assert config["simulation/grid/y/N"] == 101
 
 
+def test_include_files_in_subdirectories(tmp_path):
+    with unit_test_utils.working_directory(tmp_path):
+        text1 = """
+    simulation:
+        grid:
+            '@include' : configs/grid.yml
+    """
+
+        text2 = """
+    x: 
+        '@include' : grid-params.yml
+    y: 
+        '@include' : grid-params.yml
+    """
+        text3 = """
+    min: 0 cm
+    max: 1 cm
+    N: 101
+        """
+
+        pathlib.Path("main.yml").write_text(text1)
+        pathlib.Path("configs").mkdir()
+        pathlib.Path("configs/grid.yml").write_text(text2)
+        pathlib.Path("configs/grid-params.yml").write_text(text3)
+
+        config = loaders.yaml(text1)
+        config = rendering.load_includes(config, loaders.yaml)
+
+        assert "simulation/grid/x/min" in config
+        assert "simulation/grid/x/max" in config
+        assert "simulation/grid/x/N" in config
+        assert "simulation/grid/y/min" in config
+        assert "simulation/grid/y/max" in config
+        assert "simulation/grid/y/N" in config
+
+        assert config["simulation/grid/x/min"] == "0 cm"
+        assert config["simulation/grid/x/max"] == "1 cm"
+        assert config["simulation/grid/x/N"] == 101
+        assert config["simulation/grid/y/min"] == "0 cm"
+        assert config["simulation/grid/y/max"] == "1 cm"
+        assert config["simulation/grid/y/N"] == 101
+
+
+def test_deep_nested_include_branches_yaml(tmp_path):
+    with unit_test_utils.working_directory(tmp_path):
+        text1 = """
+    simulation:
+        time:
+            '@include' : configs/time.yml
+    """
+
+        text2 = """
+    resolution: 
+        '@include' : time/resolution.yml 
+    """
+        text3 = """
+        min: 1 us
+        max: 10 us
+        """
+
+        pathlib.Path("configs/time").mkdir(parents=True)
+        pathlib.Path("configs/time.yml").write_text(text2)
+        pathlib.Path("configs/time/resolution.yml").write_text(text3)
+
+        config = loaders.yaml(text1)
+        config = rendering.load_includes(config, loaders.yaml)
+
+        assert "simulation/time/resolution/min" in config
+        assert "simulation/time/resolution/max" in config
+
+        assert config["simulation/time/resolution/min"] == "1 us"
+        assert config["simulation/time/resolution/max"] == "10 us"
+
+
+def test_multi_include_files_in_subdirectories(tmp_path):
+    with unit_test_utils.working_directory(tmp_path):
+        text1 = """
+    simulation:
+        grid:
+            '@include' : configs/grid.yml
+    """
+
+        text2 = """
+    x: 
+        '@include' : 
+          - grid-params.yml
+          - grid-params.yml
+    y: 
+        '@include' : 
+           - grid-params.yml
+           - grid-params.yml
+    """
+        text3 = """
+    min: 0 cm
+    max: 1 cm
+    N: 101
+        """
+
+        pathlib.Path("main.yml").write_text(text1)
+        pathlib.Path("configs").mkdir()
+        pathlib.Path("configs/grid.yml").write_text(text2)
+        pathlib.Path("configs/grid-params.yml").write_text(text3)
+
+        config = loaders.yaml(text1)
+        config = rendering.load_includes(config, loaders.yaml)
+
+        assert "simulation/grid/x/min" in config
+        assert "simulation/grid/x/max" in config
+        assert "simulation/grid/x/N" in config
+        assert "simulation/grid/y/min" in config
+        assert "simulation/grid/y/max" in config
+        assert "simulation/grid/y/N" in config
+
+        assert config["simulation/grid/x/min"] == "0 cm"
+        assert config["simulation/grid/x/max"] == "1 cm"
+        assert config["simulation/grid/x/N"] == 101
+        assert config["simulation/grid/y/min"] == "0 cm"
+        assert config["simulation/grid/y/max"] == "1 cm"
+        assert config["simulation/grid/y/N"] == 101
+
+
 def test_yaml_config_var_name_errors():
     config_text = """
 layers:

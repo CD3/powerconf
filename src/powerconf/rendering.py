@@ -131,7 +131,7 @@ def contains_variable(text: Any):
     return len(results) > 0
 
 
-def load_includes(config: fspathtree, loader):
+def load_includes(config: fspathtree, loader, base_path=Path(".")):
     """
     Find all '@include' branches in the tree and load the branch from
     a file.
@@ -141,15 +141,18 @@ def load_includes(config: fspathtree, loader):
     """
     for leaf in list(config.get_all_paths(predicate=lambda p: p.name == "@include")):
         if type(config[leaf]) is str:
-            loaded_config = loader(Path(config[leaf]))
-            loaded_config = load_includes(loaded_config, loader)
+            config_path = base_path / config[leaf]
+            loaded_config = loader(config_path)
+            loaded_config = load_includes(loaded_config, loader, config_path.parent)
         elif type(config[leaf]) is fspathtree and type(config[leaf].tree) is list:
             # load first include
-            loaded_config = loader(Path(config[leaf][0]))
+            config_path = base_path / config[leaf][0]
+            loaded_config = loader(config_path)
             # load others using update method
             for i in range(1, len(config[leaf])):
-                loaded_config.update(loader(Path(config[leaf][i])))
-            loaded_config = load_includes(loaded_config, loader)
+                config_path = base_path / config[leaf][i]
+                loaded_config.update(loader(config_path))
+            loaded_config = load_includes(loaded_config, loader, config_path.parent)
         else:
             raise RuntimeError(
                 "'@include' node value must be a string or a list of strings."
