@@ -77,7 +77,8 @@ def powerload(
     config_docs = loaders.yaml_all_docs(config_file)
     complete_configs = rendering.expand_partial_configs(config_docs)
     complete_configs = [
-        rendering.load_includes(c, loaders.yaml) for c in complete_configs
+        rendering.load_includes(c, loaders.yaml, config_file.parent)
+        for c in complete_configs
     ]
 
     # default to legacy serial behavior
@@ -128,4 +129,5 @@ def powerload(
 def dump(data, stream=None, **kwargs):
     """Dump a configuration tree to YAML format."""
     import yaml as _yaml
+
     return _yaml.dump(data, stream, default_flow_style=False, **kwargs)

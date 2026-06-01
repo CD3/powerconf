@@ -647,6 +647,37 @@ def test_multi_include_files_in_subdirectories(tmp_path):
         assert config["simulation/grid/y/N"] == 101
 
 
+def test_include_branches_in_nested_base_config_yaml(tmp_path):
+    """
+    Make sure that @include directves work even if base config
+    is not in the current working directory.
+    """
+    with unit_test_utils.working_directory(tmp_path):
+        text1 = """
+    simulation:
+        time:
+            '@include' : time.yml
+    """
+
+        text2 = """
+        min: 1 us
+        max: 10 us
+        """
+
+        pathlib.Path("configs").mkdir(parents=True)
+        pathlib.Path("configs/main.yml").write_text(text1)
+        pathlib.Path("configs/time.yml").write_text(text2)
+
+        config = loaders.yaml(text1)
+        config = rendering.load_includes(config, loaders.yaml, pathlib.Path("configs"))
+
+        assert "simulation/time/min" in config
+        assert "simulation/time/max" in config
+
+        assert config["simulation/time/min"] == "1 us"
+        assert config["simulation/time/max"] == "10 us"
+
+
 def test_yaml_config_var_name_errors():
     config_text = """
 layers:

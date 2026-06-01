@@ -37,6 +37,7 @@ scripts."powerconf" = "powerconf.cli:app"
 
 [dependency-groups]
 dev = [
+  "cram>=0.7",
   "pudb>=2025.1.5",
 ]
 
