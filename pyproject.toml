@@ -4,7 +4,7 @@ requires = [ "hatchling" ]
 
 [project]
 name = "powerconf"
-version = "0.8.4"
+version = "0.8.5"
 description = "Powerup your configuration files."
 readme = "README.md"
 requires-python = ">=3.10"
