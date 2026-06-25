@@ -1293,4 +1293,41 @@ x_max = 10.0
 N     = 2000
 ```
 
+#### `powerconf report`
 
+`powerconf report` reads a configuration file and writes a pipe-delimited table summarizing the
+configuration instances. This is most useful with batch configurations: after running a sweep of
+simulations you can correlate each run's output back to its inputs without re-parsing the config.
+
+Add a `powerconf-report` section to your configuration file that lists the columns you want in the
+table. Each column has a `title`, a `value` expression (evaluated against the rendered config), and
+an optional `unit` for quantities.
+
+```bash
+$cat CONFIG.yaml
+grid:
+  res:
+    '@batch':
+      - 10 um
+      - 50 um
+      - 100 um
+  x:
+    min: -1 cm
+    max: 1 cm
+    N: $( int( (${max}-${min})/${../res} ) )
+powerconf-report:
+  columns:
+    - title: Resolution
+      unit: um
+      value: $(${/grid/res})
+    - title: N
+      value: $(${/grid/x/N})
+$ powerconf report CONFIG.yaml
+Resolution [um]|N
+10|2000
+50|400
+100|200
+```
+
+The first row is a header built from the column `title` values (with the `unit` appended in brackets
+when present). Each subsequent row corresponds to one configuration instance.
