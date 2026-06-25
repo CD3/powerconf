@@ -26,6 +26,8 @@ Powerful configuration tools for numerical models.
       - [Configuring external tools/simulations](#configuring-external-tools/simulations)
         - [`powerconf generate`](#`powerconf-generate`)
         - [`powerconf render`](#`powerconf-render`)
+          - [Template Syntax Quick Reference](#template-syntax-quick-reference)
+  - [template.ini.template](#template.ini.template)
 
 
 `powerconf` allows you to write configuration files for things like physics simulations
@@ -381,92 +383,44 @@ node1:
    val3: $(${val2})
 $ powerconf print-instances CONFIG.yaml
 ╭───────────────────── Traceback (most recent call last) ──────────────────────╮
-│ /home/cclark/Code/sync/projects/powerconf/src/powerconf/cli.py:518 in        │
+│ /home/cclark/Code/sync/projects/powerconf/src/powerconf/cli.py:208 in        │
 │ print_instances                                                              │
 │                                                                              │
-│   515 │   """                                                                │
-│   516 │   Print instances of configuration trees generated from the config.  │
-│   517 │   """                                                                │
-│ ❱ 518 │   configs = yaml.powerload(config_file, njobs=njobs)                 │
-│   519 │   configs = utils.apply_transform(                                   │
-│   520 │   │   configs, lambda p, n: str(n), lambda p, n: hasattr(n, "magnitu │
-│   521 │   )                                                                  │
+│   205 │   """                                                                │
+│   206 │   Print instances of configuration trees generated from the config.  │
+│   207 │   """                                                                │
+│ ❱ 208 │   configs = yaml.powerload(config_file, njobs=njobs)                 │
+│   209 │   configs = utils.apply_transform(                                   │
+│   210 │   │   configs, lambda p, n: str(n), lambda p, n: hasattr(n,          │
+│       "magnitude")                                                           │
+│   211 │   )                                                                  │
 │                                                                              │
-│ ╭────────────────── locals ───────────────────╮                              │
-│ │ config_file = PosixPath('/tmp/tmplg5c4eup') │                              │
-│ │       njobs = 1                             │                              │
-│ ╰─────────────────────────────────────────────╯                              │
-│                                                                              │
-│ /home/cclark/Code/sync/projects/powerconf/src/powerconf/yaml.py:94 in        │
+│ /home/cclark/Code/sync/projects/powerconf/src/powerconf/yaml.py:95 in        │
 │ powerload                                                                    │
 │                                                                              │
-│    91 │   │   │   │   *list(map(config_renderer.expand_batch_nodes, complete │
-│    92 │   │   │   )                                                          │
-│    93 │   │   )                                                              │
-│ ❱  94 │   │   rendered_configs = list(map(config_renderer.render, unrendered │
-│    95 │   │   if transform is not None:                                      │
-│    96 │   │   │   utils.apply_transform(rendered_configs, transform)         │
-│    97 │   │   return rendered_configs                                        │
+│    92 │   │   │   │   *list(map(config_renderer.expand_batch_nodes,          │
+│       complete_configs))                                                     │
+│    93 │   │   │   )                                                          │
+│    94 │   │   )                                                              │
+│ ❱  95 │   │   rendered_configs = list(map(config_renderer.render,            │
+│       unrendered_configs))                                                   │
+│    96 │   │   if transform is not None:                                      │
+│    97 │   │   │   utils.apply_transform(rendered_configs, transform)         │
+│    98 │   │   return rendered_configs                                        │
 │                                                                              │
-│ ╭───────────────────────────────── locals ─────────────────────────────────╮ │
-│ │   complete_configs = [                                                   │ │
-│ │                      │   <fspathtree.fspathtree.fspathtree object at     │ │
-│ │                      0x7eee19471ac0>                                     │ │
-│ │                      ]                                                   │ │
-│ │        config_docs = [                                                   │ │
-│ │                      │   <fspathtree.fspathtree.fspathtree object at     │ │
-│ │                      0x7eee19471ac0>                                     │ │
-│ │                      ]                                                   │ │
-│ │        config_file = PosixPath('/tmp/tmplg5c4eup')                       │ │
-│ │    config_renderer = <powerconf.rendering.ConfigRenderer object at       │ │
-│ │                      0x7eee184f5910>                                     │ │
-│ │              njobs = 1                                                   │ │
-│ │          transform = None                                                │ │
-│ │ unrendered_configs = [                                                   │ │
-│ │                      │   <fspathtree.fspathtree.fspathtree object at     │ │
-│ │                      0x7eee1842b230>                                     │ │
-│ │                      ]                                                   │ │
-│ ╰──────────────────────────────────────────────────────────────────────────╯ │
-│                                                                              │
-│ /home/cclark/Code/sync/projects/powerconf/src/powerconf/rendering.py:211 in  │
+│ /home/cclark/Code/sync/projects/powerconf/src/powerconf/rendering.py:249 in  │
 │ render                                                                       │
 │                                                                              │
-│   208 │   │   │   msg = "Circular dependencies detected."                    │
-│   209 │   │   │   for cycle in cycles:                                       │
-│   210 │   │   │   │   msg += "(" + " -> ".join(map(str, cycle)) + ")"        │
-│ ❱ 211 │   │   │   raise RuntimeError(msg)                                    │
-│   212 │   │                                                                  │
-│   213 │   │   # make a copy to work with                                     │
-│   214                                                                        │
-│                                                                              │
-│ ╭───────────────────────────────── locals ─────────────────────────────────╮ │
-│ │    config = <fspathtree.fspathtree.fspathtree object at 0x7eee1842b230>  │ │
-│ │     cycle = [                                                            │ │
-│ │             │   PurePosixPath('/node1/node2/val2'),                      │ │
-│ │             │   PurePosixPath('/node1/node2/val1'),                      │ │
-│ │             │   PurePosixPath('/node1/node2/val3')                       │ │
-│ │             ]                                                            │ │
-│ │    cycles = [                                                            │ │
-│ │             │   [                                                        │ │
-│ │             │   │   PurePosixPath('/node1/node2/val2'),                  │ │
-│ │             │   │   PurePosixPath('/node1/node2/val1'),                  │ │
-│ │             │   │   PurePosixPath('/node1/node2/val3')                   │ │
-│ │             │   ]                                                        │ │
-│ │             ]                                                            │ │
-│ │       dep = PurePosixPath('/node1/node2/val2')                           │ │
-│ │         G = <networkx.classes.digraph.DiGraph object at 0x7eee18572690>  │ │
-│ │ make_copy = True                                                         │ │
-│ │       msg = 'Circular dependencies detected.(/node1/node2/val2 ->        │ │
-│ │             /node1/node2/val1 -> /node1'+12                              │ │
-│ │      node = PurePosixPath('/node1/node2/val3')                           │ │
-│ │      self = <powerconf.rendering.ConfigRenderer object at                │ │
-│ │             0x7eee184f5910>                                              │ │
-│ │         v = PurePosixPath('val2')                                        │ │
-│ │ variables = [PurePosixPath('val2')]                                      │ │
-│ ╰──────────────────────────────────────────────────────────────────────────╯ │
+│   246 │   │   │   msg = "Circular dependencies detected."                    │
+│   247 │   │   │   for cycle in cycles:                                       │
+│   248 │   │   │   │   msg += "(" + " -> ".join(map(str, cycle)) + ")"        │
+│ ❱ 249 │   │   │   raise RuntimeError(msg)                                    │
+│   250 │   │                                                                  │
+│   251 │   │   # make a copy to work with                                     │
+│   252                                                                        │
 ╰──────────────────────────────────────────────────────────────────────────────╯
-RuntimeError: Circular dependencies detected.(/node1/node2/val2 -> 
-/node1/node2/val1 -> /node1/node2/val3)
+RuntimeError: Circular dependencies detected.(/node1/node2/val3 -> 
+/node1/node2/val2 -> /node1/node2/val1)
 
 ```
 
@@ -1300,4 +1254,43 @@ The template configuration file is a [mustache](https://mustache.github.io/) tem
 tree instance as a context. Note that there is **no** leading `/` in the mustache template syntax.
 
 `powerconf render` can handle batch configurations too. Configuration files written to a subdirectory just as with `powerconf generate`.
+
+##### Template Syntax Quick Reference
+
+
+Template files use [Mustache](https://mustache.github.io/) syntax. Insert a configuration value anywhere in the template
+with `{{path/to/param}}`. The path mirrors the YAML key path from the configuration root, **without** a leading `/`:
+
+| Config path | Template tag |
+|---|---|
+| `/grid/x/min` | `{{grid/x/min}}` |
+| `/material/thermal_conductivity` | `{{material/thermal_conductivity}}` |
+
+Values that carry units (e.g. `-1 cm`) are rendered as their full pint string (e.g. `-1 centimeter`). If the target
+format needs a plain number in specific units, add a conversion expression in the config before passing it to the template:
+
+```yaml
+acme:
+  x_min: $(${/grid/x/min}.to('mm').magnitude)   # renders as -10.0, not -1 centimeter
+```
+
+A minimal end-to-end example:
+
+```
+# template.ini.template
+[grid]
+x_min = {{grid/x/min}}
+x_max = {{grid/x/max}}
+N     = {{grid/x/N}}
+```
+
+```bash
+$ powerconf render CONFIG.yaml template.ini.template output.ini
+$ cat output.ini
+[grid]
+x_min = -10.0
+x_max = 10.0
+N     = 2000
+```
+
 

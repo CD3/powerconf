@@ -804,3 +804,42 @@ tree instance as a context. Note that there is **no** leading `/` in the mustach
 
 `powerconf render` can handle batch configurations too. Configuration files written to a subdirectory just as with `powerconf generate`.
 
+##### Template Syntax Quick Reference
+
+{% raw %}
+Template files use [Mustache](https://mustache.github.io/) syntax. Insert a configuration value anywhere in the template
+with `{{path/to/param}}`. The path mirrors the YAML key path from the configuration root, **without** a leading `/`:
+
+| Config path | Template tag |
+|---|---|
+| `/grid/x/min` | `{{grid/x/min}}` |
+| `/material/thermal_conductivity` | `{{material/thermal_conductivity}}` |
+
+Values that carry units (e.g. `-1 cm`) are rendered as their full pint string (e.g. `-1 centimeter`). If the target
+format needs a plain number in specific units, add a conversion expression in the config before passing it to the template:
+
+```yaml
+acme:
+  x_min: $(${/grid/x/min}.to('mm').magnitude)   # renders as -10.0, not -1 centimeter
+```
+
+A minimal end-to-end example:
+
+```
+# template.ini.template
+[grid]
+x_min = {{grid/x/min}}
+x_max = {{grid/x/max}}
+N     = {{grid/x/N}}
+```
+
+```bash
+$ powerconf render CONFIG.yaml template.ini.template output.ini
+$ cat output.ini
+[grid]
+x_min = -10.0
+x_max = 10.0
+N     = 2000
+```
+
+{% endraw %}
