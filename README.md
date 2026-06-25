@@ -963,6 +963,91 @@ In this example, the included files reference `${../../res}` which is a paramete
 Variable references in included files are resolved after the include is expanded, so they have access to the
 full configuration tree.
 
+### Extensions (`powerconf_extensions.py`)
+
+If you place a file named `powerconf_extensions.py` in the same directory as your configuration
+file, powerconf will load it automatically and make all of its public names available inside
+`$(...)` expressions. This is useful for two things: defining helper functions that are too
+complex to write inline, and reading data from files (e.g. simulation output) for use in reports.
+
+#### Helper functions
+
+```python
+# powerconf_extensions.py
+def clamp(value, lo, hi):
+    return max(lo, min(value, hi))
+```
+
+```yaml
+# CONFIG.yaml
+grid:
+  x:
+    res: 100 um
+    min: -1 cm
+    max: 1 cm
+    N: $( clamp( int( (${max}-${min})/${res} ), 10, 10000 ) )
+```
+
+```bash
+$ powerconf print-instances CONFIG.yaml
+grid:
+  x:
+    N: 200
+    max: 1 centimeter
+    min: -1 centimeter
+    res: 100 micrometer
+```
+
+#### Reading simulation output for reports
+
+A common workflow is to run a batch of simulations and then use `powerconf report` to build a
+summary table that correlates inputs to outputs. Extension functions can read each run's output
+file and return the value for a report column.
+
+```python
+# powerconf_extensions.py
+import pathlib
+
+def peak_value(run_dir):
+    result = pathlib.Path(run_dir) / "result.txt"
+    if not result.exists():
+        return None
+    return float(result.read_text().strip())
+```
+
+```yaml
+# CONFIG.yaml
+grid:
+  res:
+    '@batch':
+      - 10 um
+      - 50 um
+      - 100 um
+  x:
+    min: -1 cm
+    max: 1 cm
+    N: $( int( (${max}-${min})/${../res} ) )
+output:
+  dir: sim-res-$(${/grid/res}.magnitude)
+powerconf-report:
+  columns:
+    - title: Resolution
+      unit: um
+      value: $(${/grid/res})
+    - title: N
+      value: $(${/grid/x/N})
+    - title: Peak Value
+      value: $(peak_value(${/output/dir}))
+```
+
+```bash
+$ powerconf report CONFIG.yaml
+Resolution [um]|N|Peak Value
+10|2000|1.23
+50|400|0.87
+100|200|0.61
+```
+
 ### Configuring external tools/simulations
 
 #### `powerconf generate`
