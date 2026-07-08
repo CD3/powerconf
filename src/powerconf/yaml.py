@@ -30,8 +30,8 @@ def _get_function_name(src):
     return name[: name.find("(")]
 
 
-def config_renderer_server_func(link):
-    config_renderer = rendering.ConfigRenderer()
+def config_renderer_server_func(link, config_dir=None):
+    config_renderer = rendering.ConfigRenderer(config_dir=config_dir)
     while True:
         msg = link.recv()
         if msg == "stop":
@@ -86,7 +86,7 @@ def powerload(
         njobs = 1
 
     if njobs == 1:
-        config_renderer = rendering.ConfigRenderer()
+        config_renderer = rendering.ConfigRenderer(config_dir=config_file.parent)
         unrendered_configs = list(
             itertools.chain(
                 *list(map(config_renderer.expand_batch_nodes, complete_configs))
@@ -108,7 +108,10 @@ def powerload(
                 "Transforms can only be free functions when using parallel processing"
             )
 
-    config_renderer_server = BatchJobController(config_renderer_server_func)
+    from functools import partial
+    config_renderer_server = BatchJobController(
+        partial(config_renderer_server_func, config_dir=config_file.parent)
+    )
     jobs = list(map(lambda c: mkmsg("expand_batch_nodes", c), complete_configs))
     unrendered_config = list(itertools.chain(*config_renderer_server.run_jobs(jobs)))
     jobs = list(map(lambda c: mkmsg("render", c), unrendered_config))

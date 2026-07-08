@@ -123,6 +123,33 @@ import time
     assert parallel_runtime < 0.75 * serial_runtime
     os.chdir(orig_path)
 
+def test_extensions_file_found_next_to_config(tmp_path):
+    """
+    powerconf_extensions.py should be found when it sits next to the config file,
+    even when CWD is a different directory.
+    """
+    config_dir = tmp_path / "sim"
+    config_dir.mkdir()
+    config_file = config_dir / "CONFIG.yml"
+    config_file.write_text("""
+result: $(double(21))
+""")
+    (config_dir / "powerconf_extensions.py").write_text("""
+def double(x):
+    return x * 2
+""")
+
+    orig_path = os.getcwd()
+    os.chdir(tmp_path)  # CWD is tmp_path, not config_dir
+    try:
+        configs = yaml.powerload(config_file)
+    finally:
+        os.chdir(orig_path)
+
+    assert len(configs) == 1
+    assert configs[0]["/result"] == 42
+
+
 def test_yaml_powerload_with_transform(tmp_path):
     text = """
 grid:

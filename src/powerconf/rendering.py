@@ -172,9 +172,9 @@ def load_includes(config: fspathtree, loader, base_path=Path(".")):
 class ConfigRenderer:
     Quantity = units.Q_
 
-    def __init__(self, expression_evaluator=None):
+    def __init__(self, expression_evaluator=None, config_dir=None):
         if expression_evaluator is None:
-            expression_evaluator = expressions.ExecExpressionEvaluator()
+            expression_evaluator = expressions.ExecExpressionEvaluator(config_dir=config_dir)
 
         self.expression_evaluator = expression_evaluator
 

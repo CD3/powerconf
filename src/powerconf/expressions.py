@@ -25,7 +25,7 @@ class ExpressionEvaluator:
 class ExecExpressionEvaluator(ExpressionEvaluator):
     """A class for evaluating expressions using the builtin exec(). BE CAREFUL!"""
 
-    def __init__(self):
+    def __init__(self, config_dir=None):
         self.globals = {}
         self.locals = {}
         self.token = "_configurator_xyz"
@@ -41,8 +41,18 @@ class ExecExpressionEvaluator(ExpressionEvaluator):
         except Exception:
             pass
 
-        extension_file = pathlib.Path("powerconf_extensions.py")
-        if extension_file.exists():
+        # Prefer extensions file next to the config, fall back to CWD.
+        extension_file = None
+        if config_dir is not None:
+            candidate = pathlib.Path(config_dir) / "powerconf_extensions.py"
+            if candidate.exists():
+                extension_file = candidate
+        if extension_file is None:
+            candidate = pathlib.Path("powerconf_extensions.py")
+            if candidate.exists():
+                extension_file = candidate
+
+        if extension_file is not None:
             try:
                 import importlib
 
