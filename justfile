@@ -1,4 +1,4 @@
-set positional-arguments := true
+set positional-arguments
 
 list:
     just --list
@@ -11,6 +11,9 @@ test *args:
 
 pytest *args:
     uv run pytest "$@"
+
+cramtest *args:
+    uv run cram "$@" tests/cram/*.t
 
 make-readme:
     uv run compudoc README.md.cd README.md --comment-line-pattern "<!--{{{{CODE}}-->"

@@ -55,6 +55,17 @@ Files can be included from sub-directories
         min: 0 centimeter
         n: 100
   
-@include directives in files can be included from sub-directories
-are relative to the sub-directory
+powerconf_extensions.py can sit next to a config file in a sub directory
   $ rm * -r
+  $ mkdir configs
+  $ cat > configs/powerconf_extensions.py << EOF
+  > def compute_value():
+  >   return 42
+  > EOF
+  $ cat > configs/main.yml << 'EOF'
+  > val: $(compute_value())
+  > EOF
+  $ powerconf print-instances configs/main.yml
+  val: 42
+  
+
