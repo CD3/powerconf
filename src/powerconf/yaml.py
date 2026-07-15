@@ -49,10 +49,15 @@ def config_renderer_server_func(link, config_dir=None):
                 config = msg["payload"]["config"]
                 transform_src = msg["payload"]["transform"]
                 transform_name = _get_function_name(transform_src)
-                print(locals())
-                exec(transform_src)
-                print(locals())
-                exec(f"""utils.apply_transform(config, {transform_name})""")
+                locals_ = (
+                    locals()
+                )  # need to create a local copy to mutate with exec now (>= 3.13)
+                exec(transform_src, globals(), locals_)
+                exec(
+                    f"""utils.apply_transform(config, {transform_name})""",
+                    globals(),
+                    locals_,
+                )
                 link.send(config)
         except Exception as e:
             link.send(e)

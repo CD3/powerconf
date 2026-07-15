@@ -15,14 +15,15 @@ def validate_config(
         for node in ast.walk(validate_ast)
         if isinstance(node, ast.FunctionDef)
     ]
+    locals_ = locals()
     validate_code = compile(validate_ast, "<string>", "exec")
-    exec(validate_code)
+    exec(validate_code, globals(), locals_)
 
     results = {}
     for fname in validate_function_names:
         code = fname + "(config)"
         try:
-            exec(code)
+            exec(code, globals(), locals_)
             results[fname] = {"result": "pass"}
         except Exception as e:
             result = {"result": "fail", "exception": e}
