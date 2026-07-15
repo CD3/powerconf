@@ -123,6 +123,7 @@ import time
     assert parallel_runtime < 0.75 * serial_runtime
     os.chdir(orig_path)
 
+
 def test_extensions_file_found_next_to_config(tmp_path):
     """
     powerconf_extensions.py should be found when it sits next to the config file,
@@ -174,6 +175,10 @@ grid:
 
     def mkstr(p, v):
         return str(v)
+
+    configs = yaml.powerload(config_file)
+    assert len(configs) == 1
+    assert type(configs[0]["/grid/x/max"]) is not str
 
     configs = yaml.powerload(config_file, transform=mkstr)
     assert len(configs) == 1

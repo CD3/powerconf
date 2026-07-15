@@ -1,7 +1,9 @@
 import inspect
 import itertools
 import pathlib
+import sys
 import textwrap
+import traceback
 from types import FunctionType
 from typing import List
 
@@ -33,22 +35,27 @@ def _get_function_name(src):
 def config_renderer_server_func(link, config_dir=None):
     config_renderer = rendering.ConfigRenderer(config_dir=config_dir)
     while True:
-        msg = link.recv()
-        if msg == "stop":
-            break
-        if msg["type"] == "expand_batch_nodes":
-            res = config_renderer.expand_batch_nodes(msg["payload"])
-            link.send(res)
-        if msg["type"] == "render":
-            res = config_renderer.render(msg["payload"])
-            link.send(res)
-        if msg["type"] == "transform":
-            config = msg["payload"]["config"]
-            transform_src = msg["payload"]["transform"]
-            transform_name = _get_function_name(transform_src)
-            exec(transform_src)
-            exec(f"""utils.apply_transform(config, {transform_name})""")
-            link.send(config)
+        try:
+            msg = link.recv()
+            if msg == "stop":
+                break
+            if msg["type"] == "expand_batch_nodes":
+                res = config_renderer.expand_batch_nodes(msg["payload"])
+                link.send(res)
+            if msg["type"] == "render":
+                res = config_renderer.render(msg["payload"])
+                link.send(res)
+            if msg["type"] == "transform":
+                config = msg["payload"]["config"]
+                transform_src = msg["payload"]["transform"]
+                transform_name = _get_function_name(transform_src)
+                print(locals())
+                exec(transform_src)
+                print(locals())
+                exec(f"""utils.apply_transform(config, {transform_name})""")
+                link.send(config)
+        except Exception as e:
+            link.send(e)
 
 
 def powerload(
@@ -109,24 +116,63 @@ def powerload(
             )
 
     from functools import partial
+
     config_renderer_server = BatchJobController(
         partial(config_renderer_server_func, config_dir=config_file.parent)
     )
-    jobs = list(map(lambda c: mkmsg("expand_batch_nodes", c), complete_configs))
-    unrendered_config = list(itertools.chain(*config_renderer_server.run_jobs(jobs)))
-    jobs = list(map(lambda c: mkmsg("render", c), unrendered_config))
-    rendered_configs = config_renderer_server.run_jobs(jobs)
-    if transform:
-        jobs = list(
-            map(
-                lambda c: mkmsg("transform", {"transform": transform_src, "config": c}),
-                rendered_configs,
+
+    def print_errors(iterable, stage):
+        if any(map(lambda e: isinstance(e, Exception), iterable)):
+            print(
+                f"An exception was thrown while {stage}:",
+                file=sys.stderr,
             )
+            for i, e in enumerate(iterable):
+                if isinstance(e, Exception):
+                    print(f"{i}: {e}", file=sys.stderr)
+            print(
+                "",
+                file=sys.stderr,
+            )
+
+            return True
+        return False
+
+    try:
+        jobs = list(map(lambda c: mkmsg("expand_batch_nodes", c), complete_configs))
+        unrendered_configs = list(
+            itertools.chain(*config_renderer_server.run_jobs(jobs))
         )
+
+        if print_errors(
+            unrendered_configs, "trying to expand batch nodes in configurations"
+        ):
+            raise Exception()
+        jobs = list(map(lambda c: mkmsg("render", c), unrendered_configs))
         rendered_configs = config_renderer_server.run_jobs(jobs)
-    config_renderer_server.stop()
-    config_renderer_server.wait()
-    return rendered_configs
+        if print_errors(rendered_configs, "trying to render configurations"):
+            raise Exception()
+
+        if transform:
+            jobs = list(
+                map(
+                    lambda c: mkmsg(
+                        "transform", {"transform": transform_src, "config": c}
+                    ),
+                    rendered_configs,
+                )
+            )
+            rendered_configs = config_renderer_server.run_jobs(jobs)
+            if print_errors(
+                rendered_configs, "trying to apply transformations to configurations"
+            ):
+                raise Exception()
+        return rendered_configs
+    except Exception as e:
+        print(traceback.format_exc())
+    finally:
+        config_renderer_server.stop()
+        config_renderer_server.wait()
 
 
 def dump(data, stream=None, **kwargs):
